@@ -192,6 +192,7 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         \hline
     \end{tabular}
 \end{table}
+
 \chapter{Opis działania programu - instrukcja użytkownika}
 Gra toczy się przez pięć rund oraz rozpoczyna się od animowanej sekwencji startowej z motywami sci-fi ("Heat up...", "Thrust OK", "Fire laser") wraz z dźwiękami uruchamiania. Następnie wyświetlany jest ekran powitalny z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Użytkownik nawiguje przez główne menu za pomocą joysticka, wybierając spośród opcji: "Start game", "Reset score", "Credits" oraz "Exit".
 
@@ -233,6 +234,7 @@ System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie
 \item Powrót do głównego menu dla kolejnej rozgrywki.
 \item Ciągłe monitorowanie przechylenia płytki za pomocą skalibrowanego akcelerometru - reset rekordu przy przekroczeniu progu ±30 jednostek na osiach X lub Y.
 \end{enumerate}
+
 \chapter{Opis funkcjonalności poszczególnych elementów}
 
 \section{Timer}
@@ -490,7 +492,7 @@ GPIOSetValue( PORT3, 2, 0 ); // SHUTDOWN = 0 (wzmacniacz wyłączony)
 
 Joystick jest urządzeniem peryferyjnym sterowanym za pomocą GPIO (General Purpose Input/Output). Pozycja joysticka jest odczytywana poprzez sprawdzenie stanu pinów GPIO, do których podłączone są przyciski i osie joysticka. Mikrokontroler skanuje piny i wykrywa zmiany stanu, które oznaczają ruch joysticka.
 
-\subsection*{Konfiguracja pinów GPIO}
+\subsection{Konfiguracja pinów GPIO}
 
 Joystick znajduje się na porcie drugim mikrokontrolera i ma 4 piny, które w funkcji \texttt{joystick\_init} mają wartość ustawioną na 0, co oznacza, że ich kierunek jest ustawiony na "wejście" (jeśli byłoby 1, oznaczałoby kierunek "wyjście"):
 \begin{lstlisting}[language=C]
@@ -500,7 +502,7 @@ GPIOSetDir( PORT2, 2, 0 );
 GPIOSetDir( PORT2, 3, 0 );
 \end{lstlisting}
 
-\subsection*{Odczyt stanu joysticka}
+\subsection{Odczyt stanu joysticka}
 
 Joystick korzysta z flag bitowych, które pozwalają na reprezentowanie wielu kierunków jednocześnie za pomocą operacji bitowych OR. Na przykład, jeśli zarówno kierunek góra, jak i prawo są naciśnięte, wartość łączna będzie \texttt{JOYSTICK\_UP | JOYSTICK\_RIGHT}, co daje \texttt{0x02 | 0x10 = 0x12}.
 
@@ -512,7 +514,7 @@ Dzięki takiemu podejściu możliwe jest rozpoznanie wielu stanów joysticka ora
 
 SPI (Serial Peripheral Interface) to szybki, synchroniczny interfejs szeregowy wykorzystywany do komunikacji pomiędzy mikrokontrolerami a różnego rodzaju układami peryferyjnymi, takimi jak wyświetlacze OLED, czujniki czy pamięci. Architektura SPI oparta jest na modelu master-slave, gdzie jeden układ (master) steruje transmisją, a pozostałe (slave) odpowiadają na żądania.
 
-\subsection*{Podstawowe linie SPI}
+\subsection{Podstawowe linie SPI}
 
 Typowa magistrala SPI składa się z czterech linii:
 \begin{itemize}
@@ -522,7 +524,7 @@ Typowa magistrala SPI składa się z czterech linii:
     \item \textbf{SS/CS (Slave Select/Chip Select)} – linia wyboru układu slave, aktywna w stanie niskim.
 \end{itemize}
 
-\subsection*{Zasada działania}
+\subsection{Zasada działania}
 
 Transmisja SPI jest pełnodupleksowa – dane mogą być przesyłane w obu kierunkach jednocześnie. Master inicjuje komunikację, generując sygnał zegarowy i aktywując wybranego slave'a przez obniżenie linii SS. W każdym cyklu zegara jeden bit jest przesyłany z mastera do slave'a (MOSI) i jednocześnie jeden bit z slave'a do mastera (MISO).
 
@@ -538,7 +540,7 @@ SPI posiada cztery tryby pracy, określane przez polaryzację (CPOL) i fazę (CP
 
 Wybór odpowiedniego trybu zależy od wymagań urządzenia peryferyjnego. Niezgodność trybów po obu stronach uniemożliwi poprawną komunikację.
 
-\subsection*{Konfiguracja SPI w LPC1343}
+\subsection{Konfiguracja SPI w LPC1343}
 
 W programie inicjalizacja interfejsu SPI wygląda następująco:
 \begin{lstlisting}[language=C]
@@ -555,7 +557,7 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
 
 \textbf{Uwaga praktyczna:} W przypadku kilku urządzeń slave, każde z nich powinno mieć osobną linię SS, sterowaną przez mastera. W stanie nieaktywnym linie SS należy podciągnąć do stanu wysokiego za pomocą rezystorów, aby uniknąć przypadkowej aktywacji urządzeń i konfliktów na magistrali.
 
-\subsection*{Topologie połączeń}
+\subsection{Topologie połączeń}
 
 \begin{itemize}
     \item \textbf{Jeden master, jeden slave:} najprostsza konfiguracja, wszystkie linie są połączone bezpośrednio.
@@ -599,7 +601,7 @@ SPI jest jednym z najczęściej wykorzystywanych interfejsów do komunikacji z s
 
 Wyświetlacz OLED użyty w projekcie ma rozdzielczość 96 x 64 piksele i pracuje w oparciu o interfejs SPI. Dzięki technologii OLED zapewnia głęboki kontrast oraz wyraziste kolory, umożliwiając prezentację czytelnych informacji na niewielkiej powierzchni ekranu. W projekcie zastosowano funkcję \texttt{oled\_putChar}, która zamienia podany znak na odpowiednie piksele wyświetlane na ekranie, korzystając z tablicy \texttt{font5x7} zawierającej bitmapy znaków.
 
-\subsection*{Budowa i podłączenie wyświetlacza}
+\subsection{Budowa i podłączenie wyświetlacza}
 
 Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z palety barw RGB i jest wyposażony w kontroler SSD1331. Moduł komunikuje się poprzez interfejs SPI, a napięcie zasilania wynosi od 3,3 do 5 V. Dzięki kompaktowym wymiarom (ok. 27 x 31 mm) oraz wlutowanym goldpinom, integracja z projektem jest bardzo prosta[2][6].\\
 
@@ -614,7 +616,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item CS – wybór układu (chip select)
 \end{itemize}
 
-\subsection*{Główne komponenty wyświetlacza OLED}
+\subsection{Główne komponenty wyświetlacza OLED}
 
 \begin{itemize}
     \item \textbf{Interfejs SPI} – umożliwia szybką komunikację z mikrokontrolerem oraz transfer komend i danych obrazu.
@@ -624,7 +626,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item \textbf{Panel OLED} – matryca diod generujących obraz.
 \end{itemize}
 
-\subsection*{Przepływ danych i obsługa wyświetlacza}
+\subsection{Przepływ danych i obsługa wyświetlacza}
 
 \begin{enumerate}
     \item \textbf{Przesyłanie komend} – mikrokontroler wysyła przez SPI komendy sterujące (np. ustawienia parametrów wyświetlania, reset, inicjalizacja).
@@ -632,7 +634,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item \textbf{Cykl odświeżania} – kontroler SSD1331 pobiera dane z RAM i steruje diodami OLED, generując widoczny obraz.
 \end{enumerate}
 
-\subsection*{Przykład kodu i inicjalizacji pinów}
+\subsection{Przykład kodu i inicjalizacji pinów}
 
 W kodzie projektu wyświetlacz obsługiwany jest przez funkcje, które zamieniają znaki na bitmapy i przesyłają je przez SPI:
 
@@ -662,7 +664,7 @@ Po inicjalizacji parametrów, włączenie wyświetlacza:
 GPIOSetValue(PORT1, 10, 1 );
 \end{lstlisting}
 
-\subsection*{Cechy i zalety wyświetlacza OLED w projekcie}
+\subsection{Cechy i zalety wyświetlacza OLED w projekcie}
 
 \begin{itemize}
     \item \textbf{Wysoka rozdzielczość} – 96x64 px pozwala na prezentację szczegółowych informacji i prostych grafik.
@@ -678,7 +680,7 @@ GPIOSetValue(PORT1, 10, 1 );
 
 I2C (Inter-Integrated Circuit) to synchroniczny, szeregowy protokół komunikacyjny typu master-slave, wykorzystywany do łączenia mikrokontrolerów z układami peryferyjnymi, takimi jak czujniki, pamięci czy ekspandery portów. W projekcie interfejs I2C służy do komunikacji m.in. z czujnikiem oświetlenia ISL29003.
 
-\subsection*{Zasada działania magistrali I2C}
+\subsection{Zasada działania magistrali I2C}
 
 Magistrala I2C wykorzystuje dwie linie:
 \begin{itemize}
@@ -698,7 +700,7 @@ Transmisja danych odbywa się w postaci komunikatów (messages) podzielonych na 
 
 Adresowanie pozwala na podłączenie do 128 urządzeń slave (przy adresacji 7-bitowej) bez konieczności stosowania dodatkowych linii wyboru, jak w SPI.
 
-\subsection*{Konfiguracja sprzętowa na LPC1343}
+\subsection{Konfiguracja sprzętowa na LPC1343}
 
 Aby uruchomić interfejs I2C w trybie master:
 \begin{lstlisting}[language=C]
@@ -720,7 +722,7 @@ f_{I2C} = \frac{PCLK}{2 \times (SCLH + SCLL)}
 \]
 Dla PCLK = 72\,MHz oraz SCLH = SCLL = 384, uzyskujemy \(f_{I2C} \approx 46,9\,\mathrm{kHz}\).
 
-\subsection*{Rejestry I2C w LPC1343}
+\subsection{Rejestry I2C w LPC1343}
 
 \begin{itemize}
     \item \textbf{I2CONSET/I2CONCLR} – rejestry ustawień i kasowania bitów kontrolnych.
@@ -731,7 +733,7 @@ Dla PCLK = 72\,MHz oraz SCLH = SCLL = 384, uzyskujemy \(f_{I2C} \approx 46,9\,\m
     \item \textbf{I2DATA BUFFER} – bufor odbiorczy.
 \end{itemize}
 
-\subsection*{Protokół komunikacji z ISL29003}
+\subsection{Protokół komunikacji z ISL29003}
 
 Czujnik światła ISL29003 komunikuje się przez I2C jako slave (domyślny adres: 0x44). Odczyt danych z czujnika wymaga wysłania adresu rejestru, z którego chcemy czytać (np. adres LSB lub MSB wyniku pomiaru), a następnie odczytu bajtu danych.
 
@@ -760,10 +762,6 @@ uint32_t light_read(void) {
     \item Przeliczenie wartości na jednostki luksów zgodnie z wybranym zakresem i rozdzielczością czujnika (parametry \texttt{range} i \texttt{width}).
 \end{itemize}
 
-\subsection*{Charakterystyka ISL29003}
-
-ISL29003 to zintegrowany czujnik światła z 16-bitowym przetwornikiem ADC, umożliwiający pomiar natężenia światła w szerokim zakresie (do 64\,000 luksów). Czujnik pozwala na wybór zakresu pomiarowego, ustawienie czasu integracji oraz generuje dane proporcjonalne do natężenia światła. Komunikacja przez I2C umożliwia łatwą integrację z mikrokontrolerem i odczyt danych w postaci cyfrowej[2][3][5][6].\\
-
 \textbf{Podsumowanie:}  
 Interfejs I2C zapewnia prostą i niezawodną komunikację z wieloma układami peryferyjnymi na wspólnej magistrali, a dzięki adresowaniu umożliwia obsługę wielu urządzeń bez konieczności dodatkowych linii wyboru. Implementacja obsługi czujnika ISL29003 przez I2C pozwala na szybki i precyzyjny odczyt natężenia światła w czasie rzeczywistym.
 
@@ -771,7 +769,7 @@ Interfejs I2C zapewnia prostą i niezawodną komunikację z wieloma układami pe
 
 Linijka diod LED w projekcie jest realizowana za pomocą układu PCA9532, będącego 16-bitowym sterownikiem LED z interfejsem I2C. Umożliwia on indywidualne sterowanie stanem oraz jasnością do 16 diod LED, a także generowanie efektów takich jak miganie czy płynne ściemnianie.
 
-\subsection*{Charakterystyka PCA9532}
+\subsection{Charakterystyka PCA9532}
 
 PCA9532 to specjalizowany ekspander I/O zoptymalizowany do sterowania diodami LED. Najważniejsze cechy:
 \begin{itemize}
@@ -783,11 +781,11 @@ PCA9532 to specjalizowany ekspander I/O zoptymalizowany do sterowania diodami LE
     \item Po resecie wszystkie diody są wyłączone (stan wysoki na wyjściach).
 \end{itemize}
 
-\subsection*{Podłączenie i adresacja}
+\subsection{Podłączenie i adresacja}
 
 Wyjścia LED0–LED15 są bezpośrednio połączone z diodami LED przez rezystory ograniczające prąd. Linie SDA i SCL są podciągnięte do zasilania przez rezystory 10 k\si{\ohm}. Adres układu na magistrali I2C ustala się przez odpowiednie podłączenie pinów A0–A2 do masy lub zasilania (w projekcie: 0x60).
 
-\subsection*{Sterowanie diodami w programie}
+\subsection{Sterowanie diodami w programie}
 
 W programie do sterowania diodami wykorzystywane są maski bitowe:
 \begin{itemize}
@@ -806,7 +804,7 @@ ledStateShadow |= ledOnMask;
 \end{lstlisting}
 Po ustaleniu stanu wywoływana jest funkcja \texttt{setLeds()}, która przekazuje stan do PCA9532 przez I2C.
 
-\subsection*{Przykład ustawiania stanów diod}
+\subsection{Przykład ustawiania stanów diod}
 
 Tablica \texttt{ls[]} przechowuje stany LED w 4 bajtach (po 4 diody na bajt). Funkcja \texttt{setLsStates()} ustawia odpowiednie bity:
 \begin{lstlisting}[language=C]
@@ -849,7 +847,7 @@ Zastosowanie PCA9532 umożliwia elastyczne i wydajne sterowanie linijką diod LE
 
 Do zapisu najwyższego wyniku gry wykorzystujemy pamięć nieulotną typu EEPROM, model 24LC08B, podłączoną do magistrali I2C pod adresami od 0x50 do 0x53. Pamięć ta posiada 1024 bajty podzielone na cztery bloki po 256 bajtów każdy. Operacje zapisu i odczytu realizowane są poprzez interfejs I2C, który należy uprzednio zainicjalizować.
 
-\subsection*{Adresowanie i organizacja pamięci}
+\subsection{Adresowanie i organizacja pamięci}
 
 Adres urządzenia EEPROM 24LC08B składa się z:
 \begin{itemize}
@@ -860,7 +858,7 @@ Adres urządzenia EEPROM 24LC08B składa się z:
 
 Dzięki temu możliwe jest kaskadowanie do czterech bloków pamięci (4 x 256 bajtów), co daje łącznie 1024 bajty.
 
-\subsection*{Funkcje zapisu i odczytu}
+\subsection{Funkcje zapisu i odczytu}
 
 Do zapisu danych wykorzystywana jest funkcja:
 \begin{lstlisting}[language=C]
@@ -884,7 +882,7 @@ gdzie:
     \item \texttt{len} – liczba bajtów do odczytania.
 \end{itemize}
 
-\subsection*{Procedura odczytu}
+\subsection{Procedura odczytu}
 
 Operacja odczytu wymaga najpierw wysłania adresu wewnętrznego pamięci, z którego chcemy czytać, poprzez zapis na magistrali I2C, a następnie odczytu danych. Przykładowy fragment kodu ilustrujący tę procedurę:
 
@@ -903,7 +901,7 @@ I2CRead((addr << 1), buf, len);
     \item \texttt{I2CRead} – funkcja odczytująca dane z pamięci EEPROM.
 \end{itemize}
 
-\subsection*{Opis działania}
+\subsection{Opis działania}
 
 \begin{itemize}
     \item Po wysłaniu adresu wewnętrznego następuje opóźnienie (np. pętla \texttt{for}), które pozwala na zakończenie wewnętrznego cyklu zapisu lub przygotowanie danych do odczytu.
@@ -1063,7 +1061,7 @@ MMA7455L umożliwia precyzyjny pomiar przyspieszenia w trzech osiach, jest łatw
 
 ISL29003 to zintegrowany czujnik światła wyposażony w 16-bitowy przetwornik ADC oraz programowalny zakres pomiarowy w luksach. Czujnik obsługuje sprzętowe wyjście przerwania, które pozostaje aktywne w stanie niskim do momentu zresetowania go przez hosta za pośrednictwem interfejsu I2C. ISL29003 został zaprojektowany do pracy z napięciem zasilania od 2,5\,V do 3,3\,V. Jest stale podłączony do magistrali I2C, a jego wyjście przerwania może być podłączone do pinu PIO2\_5 mikrokontrolera.
 
-\subsection*{Odczyt natężenia światła – funkcja \texttt{light\_read()}}
+\subsection{Odczyt natężenia światła – funkcja \texttt{light\_read()}}
 
 Do odczytu natężenia światła wykorzystywana jest funkcja \texttt{light\_read()}, która komunikuje się z czujnikiem poprzez protokół I2C:
 
@@ -1107,7 +1105,7 @@ uint32_t light_read(void)
 \end{itemize}
 
 
-\subsection*{Włączanie i konfiguracja czujnika – funkcja \texttt{light\_enable()}}
+\subsection{Włączanie i konfiguracja czujnika – funkcja \texttt{light\_enable()}}
 
 Do aktywacji i konfiguracji czujnika służy funkcja:
 
