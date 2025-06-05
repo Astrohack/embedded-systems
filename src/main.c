@@ -406,7 +406,6 @@ static void play_note(uint32_t note, uint32_t durationMs) {
         }
     }
     else {
-        // If note is 0, just delay (rest/silence)
         delay32Ms(0, durationMs);
     }
 }
@@ -427,11 +426,11 @@ static void adjust_theme(void) {
     
     // Threshold-based theme switching
     if (reading < 125) {
-        // Dark environment - use light text on dark background
+        // Dark environment
         fontColor = OLED_COLOR_WHITE;
         backgroundColor = OLED_COLOR_BLACK;
     } else {
-        // Bright environment - use dark text on light background
+        // Bright environment
         fontColor = OLED_COLOR_BLACK;
         backgroundColor = OLED_COLOR_WHITE;
     }
@@ -439,8 +438,6 @@ static void adjust_theme(void) {
     // Audio feedback when theme changes
     if (fontColor != prev_fontColor) {
         play_note(notes[0], 200);  // Theme changed sound
-    } else {
-        play_note(notes[4], 200);  // No change sound
     }
 }
 
@@ -503,7 +500,7 @@ uint16_t read_high_score() {
 ** Parameters:          None
 ** Returned value:      Reaction time in milliseconds (incomplete implementation)
 *****************************************************************************/
-static int measure_reaction_time(void) {
+static uint32_t measure_reaction_time(void) {
     // Configure Timer32_1 for millisecond counting
     init_timer32(1, 72000);
     LPC_TMR32B1->TCR = 0x02;  // Reset timer
@@ -517,9 +514,7 @@ static int measure_reaction_time(void) {
     wait_for_joystick_center_click();  // Wait for user response
 
     uint32_t reactionTimeMs = LPC_TMR32B1->TC;  // Read timer value
-    char reactionTimeMsString[5];
-    int n = sprintf(reactionTimeMsString, "%u", reactionTimeMs);
-    return n;  // Note: This should return reactionTimeMs, not string length
+    return reactionTimeMs;  // Note: This should return reactionTimeMs, not string length
 }
 
 /*****************************************************************************
@@ -589,13 +584,13 @@ static void play_startup_animation(void) {
     };
     
     // Display 3 different startup messages with animated dots
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 9; i++) {
         const char *str = quotes[i];
         for (int f = 0; f < 3; f++) {
             oled_clearScreen(backgroundColor);
             oled_putStringHorizontallyCentered(24, str);
             oled_putStringHorizontallyCentered(36, frames[f]);
-            delay32Ms(0, 300);  // Animation frame delay
+            delay32Ms(0, 150);  // Animation frame delay
         }
     }
     
@@ -615,6 +610,7 @@ static void play_startup_animation(void) {
 *****************************************************************************/
 static void start_game(void) {
     uint8_t round = 0;
+    uint32_t totalTime = 0;
     
     while (round < 5) {
         set_led_bar_position(round);  // Show progress on LED bar
@@ -623,33 +619,51 @@ static void start_game(void) {
         // Display waiting screen with circle outline
         oled_clearScreen(backgroundColor);
         draw_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
-        oled_putStringCentered("Czekaj...");  // "Wait..."
-        play_note(notes[2], 250);  // Audio cue
+        oled_putStringCentered("WAIT..."); 
+        play_note(notes[2], 250);
         
         // Random delay before stimulus (0.5-3.5 seconds)
         uint32_t randomDelay = (rand() % 3000) + 500;
         delay32Ms(1, randomDelay);
         
-        // Show visual stimulus (filled circle)
         fill_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
         
-        // Measure reaction time (Note: incomplete implementation)
-        measure_reaction_time();
+        // Measure reaction time 
+        uint32_t reactionTimeMs = measure_reaction_time();
+        totalTime += reactionTimeMs;
         
         // Display results
+        char reactionTimeMsString[5];
+        sprintf(reactionTimeMsString, "%u", reactionTimeMs);
         oled_clearScreen(backgroundColor);
-        char *str = strcat(reactionTimeMsString, " ms");  // Note: undefined variable
+        char *str = strcat(reactionTimeMsString, " ms"); 
         oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2, reactionTimeMsString);
         
         // Update high score if new record achieved
-        uint16_t highScoreMs = getHighScore();  // Note: undefined function
+        uint16_t highScoreMs = read_high_score(); 
         if ((reactionTimeMs < highScoreMs) || (highScoreMs == (uint16_t)0)) {
-            set_high_score(reactionTimeMs);  // Note: undefined variable
+            set_high_score(reactionTimeMs);
+            oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2 + 12, "NEW RECORD!");
+            play_note(notes[0], 100);
+            play_note(notes[5], 200);
+            play_note(notes[10], 500);
         }
         
         round++;
         wait_for_joystick_center_click();  // Wait for user to continue
     }
+
+    oled_putStringHorizontallyCentered(10, "Game Complete!");
+    
+    char avgTimeStr[16];
+    snprintf(avgTimeStr, sizeof(avgTimeStr), "Avg: %lu ms", totalTime / 5);
+    oled_putStringHorizontallyCentered(25, avgTimeStr);
+    
+    char bestTimeStr[16];
+    snprintf(bestTimeStr, sizeof(bestTimeStr), "Best: %u ms", read_high_score());
+    oled_putStringHorizontallyCentered(40, bestTimeStr);
+    
+    wait_for_joystick_center_click();
 }
 
 /*****************************************************************************
@@ -661,8 +675,7 @@ static void start_game(void) {
 **                      SPI, OLED, sensors, and audio subsystem.
 **
 ** Parameters:          None
-** Returned value:      Integer (standard main return, though embedded systems
-**                      typically don't return)
+** Returned value:      Integer
 *****************************************************************************/
 int main(void) {
     // Initialize GPIO subsystem (required for most peripherals)
@@ -721,4 +734,6 @@ int main(void) {
 
     // Enter main menu loop
     show_main_menu();
+
+    return 0;
 }
