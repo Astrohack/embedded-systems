@@ -8,6 +8,8 @@
 \usepackage{longtable}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{listingsutf8}   % Dodaje wsparcie dla UTF-8 w lstlisting
+
 \usepackage{booktabs}
 \usepackage{adjustbox}
 \usepackage{xcolor}
@@ -18,6 +20,7 @@
 \usepackage{siunitx}
 \usepackage{amsmath}         % tryb \text{} w matematyce
 \usepackage{textcomp}        % np. \textendash
+\usepackage{float}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -69,6 +72,12 @@
   {0.5em}
   {}
 \geometry{margin=2.5cm}
+
+\lstset{
+  inputencoding=utf8,       % Ustawienie kodowania wejściowego na UTF-8
+  extendedchars=true,       % Włączanie rozszerzonych znaków (np. polskich)
+  literate={ę}{{\k{e}}}1 {ó}{{\'o}}1 {ą}{{\k{a}}}1 {ś}{{\'s}}1 {ł}{{\l}}1 {ż}{{\.z}}1 {ź}{{\'z}}1 {ć}{{\'c}}1 {ń}{{\'n}}1,
+}
 
 \title{Dokumentacja - "Refleks"}
 \date{Systemy Wbudowane 2025}
@@ -170,16 +179,16 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         \hline
         Funkcjonalność      & Autor        \\
         \hline
-        Timer               & Jakub Sikora \\
-        Dźwięk              & Jakub Sikora \\
-        Joystick (GPIO)     & Jakub Sikora \\
-        Wyświetlacz OLED    & Jakub Sikora \\
-        Interfejs SPI       & Jakub Sikora \\
-        Linijka diod        & Jakub Sikora \\
-        Interfejs I2C       & Jakub Sikora \\
-        Moduł EEPROM        & Jakub Sikora \\
-        Akcelerometr        & Jakub Sikora \\
-        Czujnik oświetlenia & Jakub Sikora \\
+        Timer               & Patryk Krawczyk \\
+        Dźwięk              & Patryk Krawczyk \\
+        Joystick (GPIO)     & Unassigned \\
+        Wyświetlacz OLED    & Unassigned \\
+        Interfejs SPI       & Unassigned \\
+        Linijka diod        & Unassigned \\
+        Interfejs I2C       & Unassigned \\
+        Moduł EEPROM        & Patryk Krawczyk \\
+        Akcelerometr        & Patryk Krawczyk \\
+        Czujnik oświetlenia & Patryk Krawczyk \\
         \hline
     \end{tabular}
 \end{table}
@@ -214,7 +223,7 @@ Na płytce znajdują się dwa 32-bitowe czasomierze (ozn. timer0 i timer1). Oba 
 
 W programie wykorzystane są następujące rejestry timerów:
 
-\subsection*{TCR (Timer Control Register):}
+\subsection{TCR (Timer Control Register)}
 \begin{itemize}
     \item Adres: \texttt{0x004}.
     \item 32-bitowy rejestr kontrolujący stan rejestrów TC i PC.
@@ -225,7 +234,7 @@ W programie wykorzystane są następujące rejestry timerów:
     \end{itemize}
 \end{itemize}
 
-\subsection*{TC (Timer Counter):}
+\subsection{TC (Timer Counter)}
 \begin{itemize}
     \item Adres: \texttt{0x008}
     \item 32-bitowy rejestr inkrementowany co PR+1 cykli zegara peryferyjnego (PCLK).
@@ -233,7 +242,7 @@ W programie wykorzystane są następujące rejestry timerów:
     \item Wartość w TC odzwierciedla liczbę przepełnień rejestru PC timera od momentu jego uruchomienia.
 \end{itemize}
 
-\subsection*{PR (Prescale Register):}
+\subsection{PR (Prescale Register)}
 \begin{itemize}
     \item Adres: \texttt{0x00C}.
     \item 32-bitowy rejestr definiujący maksymalną wartość rejestru PC.
@@ -254,7 +263,7 @@ SystemCoreClock = __SYS_OSC_CLK * ((LPC_SYSCON->SYSPLLCTRL & 0x01F) + 1);
 12\,\mathrm{MHz} \times (0x25 \& 0x1F + 1) = 12\,\mathrm{MHz} \times (5+1) = 72\,\mathrm{MHz}
 \]
 
-\subsection*{PC (Prescale Counter):}
+\subsection{PC (Prescale Counter)}
 \begin{itemize}
     \item Adres: \texttt{0x010}.
     \item 32-bitowy rejestr zliczający.
@@ -262,7 +271,7 @@ SystemCoreClock = __SYS_OSC_CLK * ((LPC_SYSCON->SYSPLLCTRL & 0x01F) + 1);
     \item Kiedy wartość rejestru PC osiągnie wartość równą tej w rejestrze PR, w kolejnym cyklu zegara PCLK następuje inkrementacja rejestru TC i wyczyszczenie rejestru PC.
 \end{itemize}
 
-\subsection*{MCR (Match Control Register):}
+\subsection{MCR (Match Control Register)}
 \begin{itemize}
     \item Adres: \texttt{0x014}.
     \item 32-bitowy rejestr sterujący działaniem rejestrów MR.
@@ -270,12 +279,13 @@ SystemCoreClock = __SYS_OSC_CLK * ((LPC_SYSCON->SYSPLLCTRL & 0x01F) + 1);
     \item Bity sterujące 0-11 służą do doboru operacji podczas dopasowania rejestru TC z odpowiednim rejestrem MR.
 \end{itemize}
 
-\subsection*{IR (Interrupt Register):}
+\subsection{IR (Interrupt Register)}
 \begin{itemize}
     \item Adres: \texttt{0x000}.
     \item Służy do identyfikacji źródeł wygenerowanych przerwań.
 \end{itemize}
 
+\subsection{Opis użycia w programie}
 Rozpoczęcie odliczania na czasomierzu i odczytanie wartości bieżącego upływu czasu:
 \begin{lstlisting}[language=C]
 init_timer32(0, 72000);
@@ -296,6 +306,7 @@ Opis wartości w rejestrach:
     \item Wartość w rejestrze MCR: 0x00 – reset rejestru / brak czynności przy dopasowaniu rejestrów MR i rejestru TC.
     \item Wartość w rejestrze TCR: 0x01 – uruchomienie liczników rejestrów TC oraz PC.
 \end{itemize}
+\vspace{15pt}
 
 Funkcja \texttt{init\_timer32(uint8\_t timer\_num, uint32\_t timerInterval)} konfiguruje 32-bitowy timer mikrokontrolera LPC13xx (lub podobnego) poprzez ustawienie odpowiednich rejestrów sterujących.
 
@@ -306,40 +317,40 @@ Funkcja \texttt{init\_timer32(uint8\_t timer\_num, uint32\_t timerInterval)} kon
 
 \begin{table}[h!]
 \centering
-{\small
-\begin{tabularx}{\textwidth}{|l|p{4cm}|X|}
-\hline
-\textbf{Rejestr} & \textbf{Wartość} & \textbf{Opis} \\
-\hline
-\texttt{TCR} & \texttt{0x02 → 0x00 → 0x01} & Reset licznika (TC, PC), a następnie uruchomienie timera \\
-\hline
-\texttt{PR} & \texttt{(SystemCoreClock / 1000) - 1} & Ustawienie preskalera – tak, aby 1 zliczenie TC odpowiadało 1 ms \\
-\hline
-\texttt{MR0} & \texttt{timerInterval} & Rejestr dopasowania – liczba zliczeń przed akcją (np. 72000 dla 1 sekundy) \\
-\hline
-\texttt{MCR} & \texttt{0x03} & \makecell[l]{Bit 0: przerwanie \\ Bit 1: reset licznika przy dopasowaniu} \\
-\hline
-\texttt{IR} & \texttt{0xFF} & Wyczyszczenie flag przerwań \\
-\hline
-\texttt{NVIC\_EnableIRQ} & -- & Aktywacja przerwań timera w kontrolerze NVIC \\
-\hline
-\end{tabularx}
+{
+    \small
+    \begin{tabularx}{\textwidth}{|l|p{4cm}|X|}
+    \hline
+    \textbf{Rejestr} & \textbf{Wartość} & \textbf{Opis} \\
+    \hline
+    \texttt{TCR} & \texttt{0x02 → 0x00 → 0x01} & Reset licznika (TC, PC), a następnie uruchomienie timera \\
+    \hline
+    \texttt{PR} & \texttt{(SystemCoreClock / 1000) - 1} & Ustawienie preskalera – tak, aby 1 zliczenie TC odpowiadało 1 ms \\
+    \hline
+    \texttt{MR0} & \texttt{timerInterval} & Rejestr dopasowania – liczba zliczeń przed akcją (np. 72000 dla 1 sekundy) \\
+    \hline
+    \texttt{MCR} & \texttt{0x03} & \makecell[l]{Bit 0: przerwanie \\ Bit 1: reset licznika przy dopasowaniu} \\
+    \hline
+    \texttt{IR} & \texttt{0xFF} & Wyczyszczenie flag przerwań \\
+    \hline
+    \texttt{NVIC\_EnableIRQ} & -- & Aktywacja przerwań timera w kontrolerze NVIC \\
+    \hline
+    \end{tabularx}
 }
 \caption{Rejestry konfigurowane przez \texttt{init\_timer32()}}
 \end{table}
 
 Opis wykorzystywanej w programie funkcji \texttt{delay32Ms()}:\\
-    \begin{lstlisting}[language=C]
-        LPC_TMR32B0->TCR = 0x02; /* reset timer */
-        LPC_TMR32B0->PR = 0x00; /* set prescaler to zero */
-        LPC_TMR32B0->MR0 = delayInMs * ((SystemFrequency/LPC_SYSCON->SYSAHBCLKDIV) / 1000);
-        LPC_TMR32B0->IR = 0xff; /* reset all interrupts */
-        LPC_TMR32B0->MCR = 0x04; /* stop timer on match */
-        LPC_TMR32B0->TCR = 0x01; /* start timer */
-        /* wait until delay time has elapsed */
-        while (LPC_TMR32B0->TCR & 0x01);
-    \end{lstlisting}
-\vspace{0.5em}
+\begin{lstlisting}[language=C]
+    LPC_TMR32B0->TCR = 0x02; /* reset timer */
+    LPC_TMR32B0->PR = 0x00; /* set prescaler to zero */
+    LPC_TMR32B0->MR0 = delayInMs * ((SystemFrequency/LPC_SYSCON->SYSAHBCLKDIV) / 1000);
+    LPC_TMR32B0->IR = 0xff; /* reset all interrupts */
+    LPC_TMR32B0->MCR = 0x04; /* stop timer on match */
+    LPC_TMR32B0->TCR = 0x01; /* start timer */
+    /* wait until delay time has elapsed */
+    while (LPC_TMR32B0->TCR & 0x01);
+\end{lstlisting}
 
 Gdzie \texttt{delayInMs} = żądany czas oczekiwania w milisekundach.
 
@@ -355,53 +366,108 @@ Opis wartości w rejestrach:
 
 \section{Dźwięk}
 
-Realizacja dźwięku odbywa się poprzez filtr dolnoprzepustowy PWM oraz wzmacniacz analogowy LM4811.\\
+\subsection{Architektura systemu audio}
+Sygnał wejściowy jest przekazywany poprzez pin 2 na porcie GPIO1 (P1.2). Sygnał jest w formie sygnału PWM, co wymaga, aby w celu jego wytworzenia, naprzemiennie ustawiać pin P1.2 w stan wysoki i niski, tworząc w ten sposób falę prostokątną.\\
+System audio składa się z dwóch głównych komponentów:
+\begin{enumerate}
+    \item \textbf{Filtr dolnoprzepustowy PWM} -- konwersja sygnału cyfrowego na analogowy
+    \item \textbf{Wzmacniacz analogowy LM4811} -- wzmocnienie sygnału do poziomu wymaganego przez głośnik
+\end{enumerate}
 
-\textbf{Filtr dolnoprzepustowy PWM (PWM Low Pass Filter to Analog Signal):}
+\subsection{Filtr dolnoprzepustowy PWM -- analiza techniczna}
+
+\subsubsection{Zasada działania}
+
+Filtr dolnoprzepustowy PWM realizuje funkcję \textbf{cyfrowo-analogowego przetwornika (DAC)} poprzez:
 \begin{itemize}
-    \item Sygnał wejściowy jest przekazywany poprzez pin 2 na porcie GPIO1 (P1.2). Sygnał jest w formie sygnału PWM, co wymaga, aby w celu jego wytworzenia, naprzemiennie ustawiać pin P1.2 w stan wysoki i niski, tworząc w ten sposób falę prostokątną.
+    \item Generację sygnału PWM o zmiennym wypełnieniu
+    \item Filtrację dolnoprzepustową eliminującą składowe wysokoczęstotliwościowe
+    \item Uzyskanie sygnału analogowego proporcjonalnego do wypełnienia PWM
 \end{itemize}
+
+\subsubsection{Konfiguracja sprzętowa}
+
+Sygnał wejściowy jest przekazywany poprzez pin 2 na porcie GPIO1 (P1.2). Sygnał jest w formie sygnału PWM, co wymaga, aby w celu jego wytworzenia, naprzemiennie ustawiać pin P1.2 w stan wysoki i niski, tworząc w ten sposób falę prostokątną.\\
 
 Inicjalizacja pinu wejściowego filtra i ustawienie trybu PIO1\_2:
 \begin{lstlisting}[language=C]
-GPIOSetDir( PORT1, 2, 1 );
+GPIOSetDir( PORT1, 2, 1 );  // Ustawienie P1.2 jako wyjscie
 LPC_IOCON->JTAG_nTRST_PIO1_2 = (LPC_IOCON->JTAG_nTRST_PIO1_2 & ~0x7) | 0x01;
 \end{lstlisting}
 
-Pin jest ustawiany w stan wysoki i niski za pomocą następujących makr:
+\begin{itemize}
+    \item Pin \textbf{P1.2} jest konfigurowany jako GPIO (funkcja 0x01)
+    \item Domyślnie pin ten pełni funkcję JTAG\_nTRST, dlatego wymagana jest rekonfiguracja
+\end{itemize}
+
+\subsubsection{Generacja sygnału PWM}
+
+\indent \indent Pin jest ustawiany w stan wysoki i niski za pomocą następujących makr:
 \begin{lstlisting}[language=C]
 #define P1_2_HIGH() (LPC_GPIO1->DATA |= ((uint16_t)0x1<<2))
 #define P1_2_LOW() (LPC_GPIO1->DATA &= ~((uint16_t)0x1<<2))
 \end{lstlisting}
 
-Sygnał PWM jest wytwarzany w następujący sposób:
+Algorytm generacji tonu:
+
 \begin{lstlisting}[language=C]
 P1_2_HIGH();
-delay32Us(0, note / (uint32_t)2);
+delay32Us(0, note / (uint32_t)2);  // Polowa okresu - stan wysoki
 P1_2_LOW();
-delay32Us(0, note / (uint32_t)2);
+delay32Us(0, note / (uint32_t)2);  // Polowa okresu - stan niski
 \end{lstlisting}
 
 Gdzie \texttt{note} to żądany okres drgań dźwięku.
+
+\subsubsection{Parametry techniczne}
+
+\begin{itemize}
+    \item Częstotliwość tonu: $f = \frac{1}{\text{note}}$ [Hz]
+    \item Wypełnienie PWM: 50\% (symetryczna fala prostokątna)
+    \item Rozdzielczość czasowa: 32 $\mu$s (funkcja delay32Us)
+    \item Zakres częstotliwości: ograniczony przez rozdzielczość timera
+\end{itemize}
+
 \begin{itemize}
     \item Wejściowy sygnał PWM jest konwertowany na wyjściowy sygnał analogowy.
     \item Sygnał wyjściowy jest przekazywany do wzmacniacza analogowego LM4811.
 \end{itemize}
 
-\textbf{Wzmacniacz analogowy LM4811 (LM4811 Analog Amplifier):}
+\subsection{Wzmacniacz analogowy LM4811 -- specyfikacja}
+
+\subsubsection{Konfiguracja pinów sterujących}
+
+Inicjalizacja pinów wzmacniacza:
+\begin{lstlisting}[language=C]
+GPIOSetDir( PORT3, 0, 1 );   // P3.0 - CLK (zegar sterujący)
+GPIOSetDir( PORT3, 1, 1 );   // P3.1 - UP/DN (kierunek zmiany głośności)
+GPIOSetDir( PORT3, 2, 1 );   // P3.2 - SHUTDOWN (wyłączenie)
+
+GPIOSetValue( PORT3, 0, 0 ); // CLK = 0 (stan spoczynku)
+GPIOSetValue( PORT3, 1, 0 ); // UP/DN = 0 (zmniejszanie głośności)
+GPIOSetValue( PORT3, 2, 0 ); // SHUTDOWN = 0 (wzmacniacz wyłączony)
+\end{lstlisting}
+
+\subsubsection{Funkcje pinów sterujących}
+
+\begin{itemize}
+    \item \textbf{CLK (P3.0):} Sygnał zegarowy do sterowania głośnością (zbocze narastające aktywne)
+    \item \textbf{UP/DN (P3.1):} Kierunek zmiany głośności (1=zwiększ, 0=zmniejsz)
+    \item \textbf{SHUTDOWN (P3.2):} Kontrola zasilania (1=aktywny, 0=wyłączony)
+\end{itemize}
+
 \begin{itemize}
     \item Wejściowy sygnał analogowy jest wzmacniany i przekazywany do głośnika, który emituje falę dźwiękową.
 \end{itemize}
 
-Inicjalizacja pinów wzmacniacza:
-\begin{lstlisting}[language=C]
-GPIOSetDir( PORT3, 0, 1 );
-GPIOSetDir( PORT3, 1, 1 );
-GPIOSetDir( PORT3, 2, 1 );
-GPIOSetValue( PORT3, 0, 0 ); //LM4811-clk
-GPIOSetValue( PORT3, 1, 0 ); //LM4811-up/dn
-GPIOSetValue( PORT3, 2, 0 ); //LM4811-shutdn
-\end{lstlisting}
+\subsection{Ścieżka sygnału audio}
+
+\begin{enumerate}
+    \item \textbf{Generacja PWM} $\rightarrow$ Pin P1.2 generuje sygnał prostokątny o częstotliwości tonu
+    \item \textbf{Filtracja RC} $\rightarrow$ Filtr dolnoprzepustowy (R+C) wygładza sygnał PWM
+    \item \textbf{Wzmocnienie} $\rightarrow$ LM4811 wzmacnia sygnał analogowy
+    \item \textbf{Reprodukcja} $\rightarrow$ Głośnik konwertuje sygnał elektryczny na akustyczny
+\end{enumerate}
 
 \section{Joystick GPIO}
 
@@ -842,11 +908,11 @@ I2CRead((addr << 1), buf, len);
 
 Moduł EEPROM 24LC08B zapewnia trwałe przechowywanie danych, takich jak rekordowe wyniki gry, dzięki czemu możliwe jest ich zachowanie po wyłączeniu zasilania. Komunikacja przez interfejs I2C oraz mechanizmy adresowania blokowego umożliwiają efektywne zarządzanie pamięcią i prostą integrację z mikrokontrolerem LPC1343.
 
-\section{Akcelerometr}
+\section{Akcelerometr MMA7455L}
 
-Akcelerometr MMA7455L to trójosiowy cyfrowy czujnik MEMS, umożliwiający pomiar przyspieszenia wzdłuż osi X, Y i Z. W projekcie wykorzystano komunikację przez interfejs I2C. Urządzenie to znajduje szerokie zastosowanie w elektronice użytkowej, m.in. do detekcji ruchu, orientacji, wstrząsów czy swobodnego opadania.
+Akcelerometr MMA7455L firmy Freescale Semiconductor to zaawansowany trójosiowy cyfrowy czujnik MEMS (Micro-Electro-Mechanical Systems), umożliwiający precyzyjny pomiar przyspieszenia wzdłuż osi X, Y i Z. W projekcie wykorzystano komunikację przez interfejs I2C. Urządzenie znajduje szerokie zastosowanie w elektronice użytkowej, systemach nawigacyjnych, aplikacjach medycznych oraz przemysłowych do detekcji ruchu, orientacji, wstrząsów, swobodnego opadania i analizy wibracji.
 
-\subsection*{Główne cechy MMA7455L}
+\subsection{Główne cechy MMA7455L}
 
 \begin{itemize}
     \item Cyfrowe wyjście (I2C lub SPI, w projekcie użyto I2C)
@@ -854,39 +920,77 @@ Akcelerometr MMA7455L to trójosiowy cyfrowy czujnik MEMS, umożliwiający pomia
     \item Zakresy pomiarowe: \(\pm2\,g\), \(\pm4\,g\), \(\pm8\,g\) (w projekcie: \(\pm2\,g\))
     \item Czułość: 64 LSB/g przy 2g (tryb 10-bitowy)
     \item Możliwość generowania dwóch niezależnych przerwań (wykrywanie wstrząsów, swobodnego opadania, wibracji)
-    \item Napięcie zasilania: 2,5–5,5 V (dzięki wbudowanemu LDO i układom poziomującym)
-    \item Niska konsumpcja prądu: ok. 0,5 mA w trybie pracy, 26–42 µA w standby[3]
 \end{itemize}
 
-\subsection*{Zasada działania i podłączenie}
+\subsubsection{Interfejsy komunikacyjne}
+\begin{itemize}
+    \item \textbf{I2C:} Standard mode (100 kHz), Fast mode (400 kHz)
+    \item \textbf{SPI:} Do 8 MHz
+    \item \textbf{Przerwania:} Dwa niezależne wyjścia (INT1, INT2)
+    \item \textbf{Funkcje przerwań:} Level detection, pulse detection, freefall detection
+\end{itemize}
 
-Układ MMA7455L to mikromechaniczny system MEMS – miniaturowa masa zawieszona na sprężynach, której odchylenie pod wpływem przyspieszenia jest mierzone i przetwarzane na sygnał cyfrowy przez wbudowany przetwornik ADC. Moduł posiada wyprowadzenia do komunikacji I2C (SDA, SCL) oraz dwa wyjścia przerwań (INT1, INT2), które można podłączyć do mikrokontrolera. W celu ochrony linii przerwań i komunikacyjnych stosuje się rezystory szeregowe 270 \si{\ohm}.
+\subsubsection{Adresacja I2C}
+\begin{itemize}
+    \item \textbf{Adres 8-bitowy:} \texttt{0x3A} (zapis), \texttt{0x3B} (odczyt)
+    \item \textbf{Częstotliwość zegara:} do 400 kHz (Fast mode I2C)
+\end{itemize}
 
-\subsection*{Odczyt danych z akcelerometru}
+\subsubsection{Rejestry danych przyspieszenia}
 
-Do odczytu przyspieszenia wzdłuż trzech osi wykorzystywana jest funkcja \texttt{acc\_read()}:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|l|}
+\hline
+\textbf{Nazwa rejestru} & \textbf{Adres hex} & \textbf{Typ} & \textbf{Opis} \\
+\hline
+XOUT10 & 0x00 & R & X-axis acceleration data (10-bit, LSB) \\
+XOUT8 & 0x06 & R & X-axis acceleration data (8-bit) \\
+YOUT10 & 0x02 & R & Y-axis acceleration data (10-bit, LSB) \\
+YOUT8 & 0x07 & R & Y-axis acceleration data (8-bit) \\
+ZOUT10 & 0x04 & R & Z-axis acceleration data (10-bit, LSB) \\
+ZOUT8 & 0x08 & R & Z-axis acceleration data (8-bit) \\
+\hline
+\end{tabular}
+\caption{Rejestry danych przyspieszenia}
+\end{table}
+
+\subsubsection{Funkcja odczytu danych przyspieszenia}
 
 \begin{lstlisting}[language=C]
-void acc_read (int8_t *x, int8_t *y, int8_t *z)
+/**
+ * @brief Odczyt przyspieszenia z wszystkich osi (8-bit)
+ * @param x Wskaźnik na wartość osi X
+ * @param y Wskaźnik na wartość osi Y  
+ * @param z Wskaźnik na wartość osi Z
+ */
+void acc_read(int8_t *x, int8_t *y, int8_t *z)
 {
     uint8_t buf[1];
+    
+    // Oczekiwanie na gotowość nowych danych
     while ((getStatus() & ACC_STATUS_DRDY) == 0);
+    
+    // Odczyt osi X
     buf[0] = ACC_ADDR_XOUT8;
     I2CWrite(ACC_I2C_ADDR, buf, 1);
     I2CRead(ACC_I2C_ADDR, buf, 1);
     *x = (int8_t)buf[0];
 
+    // Odczyt osi Y
     buf[0] = ACC_ADDR_YOUT8;
     I2CWrite(ACC_I2C_ADDR, buf, 1);
     I2CRead(ACC_I2C_ADDR, buf, 1);
     *y = (int8_t)buf[0];
 
+    // Odczyt osi Z
     buf[0] = ACC_ADDR_ZOUT8;
     I2CWrite(ACC_I2C_ADDR, buf, 1);
     I2CRead(ACC_I2C_ADDR, buf, 1);
     *z = (int8_t)buf[0];
 }
 \end{lstlisting}
+
 
 \textbf{Opis działania:}
 \begin{itemize}
@@ -900,17 +1004,21 @@ void acc_read (int8_t *x, int8_t *y, int8_t *z)
     \end{itemize}
 \end{itemize}
 
+\noindent\begin{minipage}{\linewidth}
 \subsection*{Inicjalizacja akcelerometru}
 
 Funkcja \texttt{acc\_init()} ustawia tryb pracy na pomiarowy i wybiera zakres pomiarowy:
-
 \begin{lstlisting}[language=C]
+/**
+ * @brief Inicjalizacja akcelerometru MMA7455L
+ */
 void acc_init (void)
 {
     setModeControl( (ACC_MCTL_MODE (ACC_MODE_MEASURE)
         | ACC_MCTL_GLVL(ACC_RANGE_2G) ));
 }
 \end{lstlisting}
+\end{minipage}
 
 \textbf{Opis:}
 \begin{itemize}
@@ -936,7 +1044,7 @@ MMA7455L umożliwia precyzyjny pomiar przyspieszenia w trzech osiach, jest łatw
 
 \section{Czujnik oświetlenia ISL29003}
 
-ISL29003 to zintegrowany czujnik światła wyposażony w 16-bitowy przetwornik ADC oraz programowalny zakres pomiarowy w luksach. Czujnik obsługuje sprzętowe wyjście przerwania, które pozostaje aktywne w stanie niskim do momentu zresetowania go przez hosta za pośrednictwem interfejsu I2C. ISL29003 został zaprojektowany do pracy z napięciem zasilania od 2,5\,V do 3,3\,V. Jest stale podłączony do magistrali I2C, a jego wyjście przerwania może być podłączone do pinu PIO2\_5 mikrokontrolera. W celu ochrony linii przed uszkodzeniem, w przypadku gdy sygnałem steruje więcej niż jeden sterownik, zastosowano szeregowy rezystor o wartości 270~$\Omega$.
+ISL29003 to zintegrowany czujnik światła wyposażony w 16-bitowy przetwornik ADC oraz programowalny zakres pomiarowy w luksach. Czujnik obsługuje sprzętowe wyjście przerwania, które pozostaje aktywne w stanie niskim do momentu zresetowania go przez hosta za pośrednictwem interfejsu I2C. ISL29003 został zaprojektowany do pracy z napięciem zasilania od 2,5\,V do 3,3\,V. Jest stale podłączony do magistrali I2C, a jego wyjście przerwania może być podłączone do pinu PIO2\_5 mikrokontrolera.
 
 \subsection*{Odczyt natężenia światła – funkcja \texttt{light\_read()}}
 
@@ -1003,8 +1111,8 @@ void light_enable (void)
     \item \texttt{buf[0] = ADDR\_CMD;} – stała o wartości 0x00, definiująca adres rejestru komendy w czujniku światła.
     \item \texttt{buf[1] = CMD\_ENABLE;} – stała o wartości (1 << 7), reprezentująca komendę włączenia urządzenia.
     \item \texttt{I2CWrite(LIGHT\_I2C\_ADDR, buf, 2);} – wysyła przez I2C dwubajtowy pakiet (adres rejestru i komenda) na adres czujnika. Przyjmuje trzy argumenty: adres urządzenia I2C (LIGHT\_I2C\_ADDR), wskaźnik do bufora danych (buf), oraz liczbę bajtów do wysłania
-    \item \texttt{LIGHT\_I2C\_ADDR} – (0x44 << 1) – adres I2C urządzenia, do którego chcemy wysłać dane/
-    \item \texttt{range = RANGE\_K1;} – ustawia zakres pracy urządzenia (np. 973), co definiuje czułość lub zakres pomiaru czujnika światła.
+    \item \texttt{LIGHT\_I2C\_ADDR} – (0x44 << 1) – adres I2C urządzenia, do którego chcemy wysłać dane
+    \item \texttt{range = RANGE\_K1;} – ustawia zakres pracy urządzenia, co definiuje czułość lub zakres pomiaru czujnika światła.
     \item \texttt{width = WIDTH\_16\_VAL;} – ustawia szerokość (np. 1 << 16), co oznacza 16-bitową rozdzielczość pomiaru.
 \end{itemize}
 
@@ -1027,12 +1135,12 @@ void light_enable (void)
         \hline
         Awaria timera               & 0.1                & krytyczne (10) & Brak               & Brak    & 1.0     \\
         Awaria dźwięku              & 0.1                & niegroźne (2)  & Brak               & Brak    & 0.2     \\
-        Awaria joysticka            & 0.3                & krytyczne (10) & Brak               & Brak    & 3.0     \\
+        Awaria joysticka            & 0.2                & krytyczne (10) & Brak               & Brak    & 3.0     \\
         Awaria wyświetlacza         & 0.2                & krytyczne (10) & Brak               & Brak    & 2.0     \\
-        Awaria linijki diod         & 0.1                & niegroźne (2)  & Brak               & Brak    & 0.2     \\
-        Awaria EEPROM               & 0.2                & średnie (5)    & Brak               & Brak    & 1.0     \\
-        Awaria akcelerometru        & 0.3                & niegroźne (2)  & Brak               & Brak    & 0.6     \\
-        Awaria czujnika oświetlenia & 0.3                & niegroźne (2)  & Brak               & Brak    & 0.6     \\
+        Awaria linijki diod         & 0.1                & niegroźne (2)  & Brak               & Brak    & 0.1     \\
+        Awaria EEPROM               & 0.1                & średnie (5)    & Brak               & Brak    & 1.0     \\
+        Awaria akcelerometru        & 0.3                & niegroźne (2)  & Brak               & Brak    & 0.5     \\
+        Awaria czujnika oświetlenia & 0.3                & niegroźne (2)  & Brak               & Brak    & 0.1     \\
         \hline
     \end{tabular}
 }
