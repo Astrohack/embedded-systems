@@ -192,30 +192,47 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         \hline
     \end{tabular}
 \end{table}
-
 \chapter{Opis działania programu - instrukcja użytkownika}
-Gra toczy się przez pięć rund oraz rozpoczyna się od wyświetlenia ekranu powitalnego wraz z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Aktualny postęp gry można obserwować na pasku diod LED. Pierwsza runda rozpoczyna się po naciśnięciu joysticka przez użytkownika. Jest wtedy inicjowane trzysekundowe odliczanie wizualizowane na wyświetlaczu. Następnie, po pseudolosowym odstępie czasu, między jedną a dziesięcioma sekundami, na wyświetlaczu pojawia się komunikat i rozpoczyna się pomiar czasu reakcji. Kiedy użytkownik ponownie naciśnie joystick, uzyskany wynik w milisekundach jest wyświetlany na ekranie i ewentualnie aktualizowany jest rekordowy wynik. Wtedy pojawia się również opcja zresetowania zapisanego w pamięci rekordowego wyniku poprzez przechylenie płytki o kąt 30 stopni w dowolnym kierunku. Pomyślne wykonanie tej operacji zostaje potwierdzone komunikatem na wyświetlaczu. Kolejne rundy rozpoczynamy poprzez przechylenie joysticka w dół, po czym jest powtarzana ta sama sekwencja operacji co w rundzie pierwszej. Po zakończeniu piątej rundy, na ekranie wyświetlany jest komunikat o zakończeniu rozgrywki.
+Gra toczy się przez pięć rund oraz rozpoczyna się od animowanej sekwencji startowej z motywami sci-fi ("Heat up...", "Thrust OK", "Fire laser") wraz z dźwiękami uruchamiania. Następnie wyświetlany jest ekran powitalny z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Użytkownik nawiguje przez główne menu za pomocą joysticka, wybierając spośród opcji: "Start game", "Reset score", "Credits" oraz "Exit".
+
+Aktualny postęp gry można obserwować na pasku diod LED, gdzie każda dioda reprezentuje ukończoną rundę. W każdej rundzie użytkownik widzi na ekranie obrys koła z komunikatem "Wait..." wraz z dźwiękiem ostrzegawczym. Po pseudolosowym odstępie czasu (0,5-3,5 sekundy) koło zostaje wypełnione, sygnalizując rozpoczęcie pomiaru czasu reakcji. Kiedy użytkownik naciśnie joystick, uzyskany wynik w milisekundach jest wyświetlany na ekranie wraz z informacją o ewentualnym nowym rekordzie ("NEW RECORD!") i charakterystycznym dźwiękiem zwycięstwa.
+
+System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie oświetlenia otoczenia. Opcja zresetowania zapisanego w pamięci rekordowego wyniku jest dostępna poprzez przechylenie płytki o kąt 30 stopni w dowolnym kierunku - operacja zostaje potwierdzona komunikatem "Reset HS" na wyświetlaczu. Po zakończeniu wszystkich pięciu rund wyświetlane są statystyki: średni czas reakcji oraz najlepszy wynik z bieżącej sesji.
 
 \chapter{Opis działania programu - opis algorytmu}
 \begin{enumerate}
-    \item Inicjalizacja wszystkich potrzebnych urządzeń peryferyjnych.
-    \item Rozpoczęcie 5-iteracyjnej pętli.
-          \begin{enumerate}
-              \item Zmierzenie bieżącego oświetlenia i ewentualny negatyw ekranu.
-              \item Wyświetlenie na ekranie komunikatu powitalnego wraz z bieżącym rekordowym wynikiem.
-              \item Oczekiwanie na naciśnięcie joysticka.
-              \item Odliczanie od 3 do 0 w 1-sekundowych odstępach i wyświetlanie na ekranie napisów '3', '2', '1' oraz 'Czekaj...' co każdą sekundę wraz z akompaniującym dźwiękiem.
-              \item Generacja pseudolosowej wartości między 1000 a 10000 na podstawie ziarna w postaci wartości bieżącego oświetlenia otoczenia pozyskanej z czujnika światła i rozpoczęcie oczekiwania o czasie trwania równym uzyskanej wartości.
-              \item Rozpoczęcie pomiaru czasu reakcji wraz z wyświetleniem na ekranie komunikatu ‘Start!’ i jego przerwanie w momencie naciśnięcia joysticka.
-              \item Wyświetlenie wartości zmierzonego czasu w milisekundach na ekranie.
-              \item Porównanie wartości uzyskanego wyniku z wartością rekordową przechowywaną w module EEPROM i jego aktualizacja w przypadku, gdy uzyskany wynik posiada niższą wartość.
-              \item Oczekiwanie na przechylenie joysticka w dół, w międzyczasie - sprawdzanie za pomocą akcelerometru czy nie nastąpiło przechylenie płytki (jeżeli nastąpiło, wartość rekordowego wyniku przechowywana w module EEPROM ustawiana jest na 0 oraz na ekranie jest wyświetlany komunikat 'Reset HS').
-          \end{enumerate}
-    \item Przejście do kolejnej iteracji i powtórzenie operacji.
-    \item Zmierzenie bieżącego oświetlenia i ewentualny negatyw ekranu.
-    \item Wyświetlenie na ekranie komunikatu o zakończeniu gry.
+\item Inicjalizacja wszystkich potrzebnych urządzeń peryferyjnych oraz konfiguracja systemu audio z amplifikatorem LM4811.
+\item Kalibracja akcelerometru w pozycji neutralnej i ustawienie początkowego motywu kolorystycznego.
+\item Wyświetlenie animowanej sekwencji startowej z komunikatami sci-fi i efektami dźwiękowymi.
+\item Prezentacja głównego menu z nawigacją za pomocą joysticka i obsługą następujących opcji:
+\begin{enumerate}
+\item \textbf{Start game}: Rozpoczęcie 5-rundowej rozgrywki
+\item \textbf{Reset score}: Resetowanie rekordu do wartości domyślnej (9999 ms)
+\item \textbf{Credits}: Wyświetlenie informacji o autorze z melodią.
+\item \textbf{Exit}: Zakończenie programu z sekwencją dźwięków pożegnalnych
 \end{enumerate}
-
+\item Rozpoczęcie 5-iteracyjnej pętli gry:
+\begin{enumerate}
+\item Ustawienie odpowiedniej diody LED wskazującej numer rundy (0-4).
+\item Dynamiczne dostosowanie motywu kolorystycznego na podstawie czujnika światła.
+\item Wyświetlenie obrysu koła z komunikatem "Czekaj..." i odtworzenie dźwięku ostrzegawczego.
+\item Generacja pseudolosowego opóźnienia (500-3500 ms) na podstawie ziarna z czujnika światła.
+\item Wypełnienie koła jako sygnał wizualny i rozpoczęcie precyzyjnego pomiaru czasu reakcji za pomocą Timer32.
+\item Oczekiwanie na naciśnięcie joysticka z implementacją debouncingu i walidacją czasu reakcji (50-5000 ms).
+\item Wyświetlenie zmierzonego czasu reakcji z jednostką "ms".
+\item Porównanie z rekordem przechowywanym w EEPROM i aktualizacja w przypadku poprawy wyniku.
+\item Wyświetlenie komunikatu "NEW RECORD!" z dźwiękiem zwycięstwa dla nowych rekordów.
+\item Oczekiwanie na potwierdzenie kontynuacji przez użytkownika.
+\end{enumerate}
+\item Wyświetlenie końcowych statystyk gry:
+\begin{enumerate}
+\item Komunikat "Game Complete!"
+\item Średni czas reakcji z wszystkich pięciu rund
+\item Aktualny najlepszy wynik (rekord)
+\end{enumerate}
+\item Powrót do głównego menu dla kolejnej rozgrywki.
+\item Ciągłe monitorowanie przechylenia płytki za pomocą skalibrowanego akcelerometru - reset rekordu przy przekroczeniu progu ±30 jednostek na osiach X lub Y.
+\end{enumerate}
 \chapter{Opis funkcjonalności poszczególnych elementów}
 
 \section{Timer}
