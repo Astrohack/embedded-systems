@@ -12,6 +12,9 @@
 \usepackage{adjustbox}
 \usepackage{xcolor}
 \usepackage{inconsolata} 
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{titlesec}%
 \usepackage{siunitx}
 \usepackage{amsmath}         % tryb \text{} w matematyce
 \usepackage{textcomp}        % np. \textendash
@@ -48,32 +51,51 @@
 }
 \lstset{style=code}
 
+\titleformat{\chapter}[hang]
+  {\normalfont\Large\bfseries}  % Format tekstu
+  {\thechapter.}                % Numeracja rozdziału
+  {0.5em}                       % Odstęp między numerem a tytułem
+  {} 
+
+\titleformat{\section}[hang]
+  {\normalfont\large\bfseries}
+  {\thesection.}
+  {0.5em}
+  {}
+
+\titleformat{\subsection}[hang]
+  {\normalfont\normalsize\bfseries}
+  {\thesubsection.}
+  {0.5em}
+  {}
 \geometry{margin=2.5cm}
 
 \title{Dokumentacja - "Refleks"}
 \date{Systemy Wbudowane 2025}
 \author{Skład grupy (G02, czwartek 16:15):\\
-Jakub Sikora 2137 (przywódca gildi \textit{"Walecznych DevOps'ów"})\\
-Patryk Krawczyk 251563\\
-Adrian Jagieła ???}
+Najwyższy Architekt Porządku i Chaosu, \\Wielki Mistrz Gildii \textit{"Walecznych DevOps'ów"}, \\Strażnik Równowagi Systemów i Świętych Pipeline’ów, \\Dowódca Procesów CI/CD, \\Obrońca Infrastruktury Wiecznie Żywej, \\Prawowity Władca Kluczy Dostępowych, \\Pogromca Awarii Czających Się w Cieniu Logów: \\ {\huge \textbf{ Jakub Sikora 2137}} \\
+Adrian Jagieła 1337\\
+Patryk Krawczyk 251563}
 
 \begin{document}
 \maketitle
 
-\section*{1. Opis płytki rozwojowej z mikrokontrolerem LPC1343}
+\tableofcontents
 
-\subsection*{Charakterystyka ogólna}
+\chapter{Opis płytki rozwojowej z mikrokontrolerem LPC1343}
 
-LPC1343 to 32-bitowy mikrokontroler firmy NXP z rdzeniem ARM Cortex-M3, przeznaczony do zastosowań wbudowanych wymagających wysokiej integracji, niskiego poboru mocy i bogatego zestawu peryferiów. Płytki rozwojowe, takie jak LPC-P1343 czy LPC-H1343, umożliwiają łatwe prototypowanie i testowanie aplikacji dzięki wyprowadzeniom wszystkich linii I/O oraz obecności licznych interfejsów sprzętowych.
+\section{Charakterystyka ogólna}
 
-\subsection*{Główne cechy mikrokontrolera LPC1343}
+Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to uniwersalne narzędzie przeznaczone do szybkiego prototypowania i testowania aplikacji wbudowanych. Mikrokontroler LPC1343 firmy NXP, oparty na 32-bitowym rdzeniu ARM Cortex-M3, zapewnia wysoką wydajność, niski pobór mocy oraz szeroki zestaw peryferiów, co czyni go idealnym wyborem dla projektów wymagających integracji wielu funkcji na jednej płytce.
+
+\section{Główne cechy mikrokontrolera LPC1343}
 
 \begin{itemize}
     \item \textbf{Rdzeń:} ARM Cortex-M3, 32-bitowy RISC, taktowanie do 72 MHz.
     \item \textbf{Pamięć:} 32 kB Flash (programowa), 8 kB SRAM.
     \item \textbf{Zasilanie:} 2,0–3,6 V (typowo 3,3 V).
     \item \textbf{Obudowa:} LQFP48.
-    \item \textbf{Wejścia/wyjścia:} 42 linie GPIO z konfigurowalnymi rezystorami podciągającymi/ściągającymi oraz trybem open-drain.
+    \item \textbf{Wejścia/wyjścia:} 42 linie GPIO z konfigurowalnymi rezystorami.
     \item \textbf{Interfejsy komunikacyjne:}
     \begin{itemize}
         \item USB 2.0 full-speed device z wbudowanym PHY.
@@ -88,43 +110,45 @@ LPC1343 to 32-bitowy mikrokontroler firmy NXP z rdzeniem ARM Cortex-M3, przeznac
         \item Watchdog Timer (WDT).
         \item Wbudowany bootloader obsługujący ISP i IAP.
         \item NVIC (Nested Vectored Interrupt Controller).
+        \item Brownout detect z czterema progami oraz Power-On Reset.
     \end{itemize}
 \end{itemize}
 
-\subsection*{Wyposażenie płytki rozwojowej (np. LPC-P1343, LPC-H1343)}
+\section{Wyposażenie płytki rozwojowej}
 
 \begin{itemize}
-    \item \textbf{Zasilanie:} układ zasilania z diodą sygnalizującą zasilanie (Power-on LED); możliwość zasilania przez USB lub zewnętrzne źródło (5–9 V).
-    \item \textbf{USB:} złącze USB typu B do komunikacji i zasilania.
-    \item \textbf{Debugowanie:} interfejs SWD (Serial Wire Debug) do programowania i debugowania.
-    \item \textbf{Przyciski:} dwa przyciski użytkownika oraz przycisk RESET.
-    \item \textbf{LEDy:} osiem diod LED użytkownika do testów i sygnalizacji.
-    \item \textbf{Obszar prototypowy:} pole lutownicze do własnych rozszerzeń.
-    \item \textbf{UEXT:} uniwersalne złącze rozszerzeń do podłączania dodatkowych modułów (np. czujników, wyświetlaczy).
-    \item \textbf{Wyprowadzenia:} wszystkie porty mikrokontrolera wyprowadzone na złącza goldpin.
-    \item \textbf{Wymiary płytki:} typowo 80 x 50 mm (LPC-P1343), 38 x 38 mm (LPC-H1343).
+    \item \textbf{Zasilanie:} Układ zasilania z diodą sygnalizującą (Power-on LED); możliwość zasilania przez USB lub zewnętrzne źródło (5--9 V).
+    \item \textbf{USB:} Złącze USB typu B do komunikacji i zasilania; dioda sygnalizująca podłączenie USB.
+    \item \textbf{Debugowanie:} Interfejs SWD (Serial Wire Debug) do programowania i debugowania.
+    \item \textbf{Przyciski:} Dwa przyciski użytkownika (BUT1, BUT2) oraz przycisk RESET.
+    \item \textbf{LEDy:} Osiem diod LED użytkownika (LED0--LED7) podłączonych do wybranych portów GPIO.
+    \item \textbf{Obszar prototypowy:} Pole lutownicze do własnych rozszerzeń.
+    \item \textbf{UEXT:} Uniwersalne złącze rozszerzeń do podłączania dodatkowych modułów (np. czujników, wyświetlaczy).
+    \item \textbf{Wyprowadzenia:} Wszystkie porty mikrokontrolera wyprowadzone na złącza goldpin.
+    \item \textbf{Wymiary płytki:} Typowo 80 x 50 mm (LPC-P1343), 38 x 38 mm (LPC-H1343).
     \item \textbf{Płytka:} FR-4, grubość 1,5 mm, czerwony lub zielony soldermask, biały nadruk elementów.
 \end{itemize}
 
-\subsection*{Schemat blokowy i układ zasilania}
+\section{Schemat blokowy i układ zasilania}
 
 \begin{itemize}
-    \item \textbf{Zegar:} kwarc 12 MHz podłączony do pinów XTALIN/XTALOUT.
-    \item \textbf{Zworki:} umożliwiają wybór źródła zasilania (3,3 V dla rdzenia i I/O), podłączenie linii SWO do debuggera, połączenie masy z wybranymi pinami.
-    \item \textbf{Reset:} układ resetu z rezystorem 10 k\si{\ohm} i przyciskiem.
-    \item \textbf{Pobór prądu:} typowo ok. 20 mA.
+    \item \textbf{Zegar:} Kwarc 12 MHz podłączony do pinów XTALIN/XTALOUT.
+    \item \textbf{Zworki:} Umożliwiają wybór źródła zasilania (3,3 V dla rdzenia i I/O), podłączenie linii SWO do debuggera, połączenie masy z wybranymi pinami.
+    \item \textbf{Reset:} Układ resetu z rezystorem 10 k\si{\ohm} i przyciskiem.
+    \item \textbf{Pobór prądu:} Typowo ok. 20 mA.
 \end{itemize}
 
-\subsection*{Bezpieczeństwo i użytkowanie}
+\section{Bezpieczeństwo i użytkowanie}
 
 \begin{itemize}
-    \item Płytka dostarczana jest w opakowaniu antystatycznym – należy unikać ładunków elektrostatycznych podczas pracy.
+    \item Płytka dostarczana jest w opakowaniu antystatycznym -- należy unikać ładunków elektrostatycznych podczas pracy.
     \item Do programowania wymagany jest odpowiedni programator/debugger (np. ARM-JTAG-EW, ARM-USB-OCD, SWD).
     \item Zalecane środowiska programistyczne to IAR for ARM, Rowley CrossWorks lub dedykowane IDE Eclipse-based (np. LPCXpresso).
+    \item Przed podłączeniem płytki do komputera przez USB należy upewnić się, że nie występują zwarcia na liniach zasilania.
 \end{itemize}
 \clearpage
 
-\section*{2. Podział pracy w zespole wraz z listą wykorzystanych funkcjonalności}
+\chapter{Podział pracy w zespole wraz z listą wykorzystanych funkcjonalności}
 \begin{table}[h]
     \centering
     \textbf{Tabela 1. Procentowy podział pracy członków zespołu.\\}
@@ -133,9 +157,9 @@ LPC1343 to 32-bitowy mikrokontroler firmy NXP z rdzeniem ARM Cortex-M3, przeznac
         \hline
         Imię i nazwisko     & Udział (\%) \\
         \hline
-        Jakub Sikora        & 2          \\
-        Adrian Jagieła      & 49         \\
-        Patryk Krawczyk     & 49         \\
+        Jakub Sikora        & 33.3(3)      \\
+        Adrian Jagieła      & 33.3(3)      \\
+        Patryk Krawczyk     & 33.3(3)      \\
         \hline
     \end{tabular}
 
@@ -160,10 +184,10 @@ LPC1343 to 32-bitowy mikrokontroler firmy NXP z rdzeniem ARM Cortex-M3, przeznac
     \end{tabular}
 \end{table}
 
-\section*{3. Opis działania programu - instrukcja użytkownika}
+\chapter{Opis działania programu - instrukcja użytkownika}
 Gra toczy się przez pięć rund oraz rozpoczyna się od wyświetlenia ekranu powitalnego wraz z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Aktualny postęp gry można obserwować na pasku diod LED. Pierwsza runda rozpoczyna się po naciśnięciu joysticka przez użytkownika. Jest wtedy inicjowane trzysekundowe odliczanie wizualizowane na wyświetlaczu. Następnie, po pseudolosowym odstępie czasu, między jedną a dziesięcioma sekundami, na wyświetlaczu pojawia się komunikat i rozpoczyna się pomiar czasu reakcji. Kiedy użytkownik ponownie naciśnie joystick, uzyskany wynik w milisekundach jest wyświetlany na ekranie i ewentualnie aktualizowany jest rekordowy wynik. Wtedy pojawia się również opcja zresetowania zapisanego w pamięci rekordowego wyniku poprzez przechylenie płytki o kąt 30 stopni w dowolnym kierunku. Pomyślne wykonanie tej operacji zostaje potwierdzone komunikatem na wyświetlaczu. Kolejne rundy rozpoczynamy poprzez przechylenie joysticka w dół, po czym jest powtarzana ta sama sekwencja operacji co w rundzie pierwszej. Po zakończeniu piątej rundy, na ekranie wyświetlany jest komunikat o zakończeniu rozgrywki.
 
-\section*{4. Opis działania programu - opis algorytmu}
+\chapter{Opis działania programu - opis algorytmu}
 \begin{enumerate}
     \item Inicjalizacja wszystkich potrzebnych urządzeń peryferyjnych.
     \item Rozpoczęcie 5-iteracyjnej pętli.
@@ -183,16 +207,16 @@ Gra toczy się przez pięć rund oraz rozpoczyna się od wyświetlenia ekranu po
     \item Wyświetlenie na ekranie komunikatu o zakończeniu gry.
 \end{enumerate}
 
-\section*{5. Opis funkcjonalności poszczególnych elementów}
+\chapter{Opis funkcjonalności poszczególnych elementów}
 
-\subsection*{1. Timer}
+\section{Timer}
 Na płytce znajdują się dwa 32-bitowe czasomierze (ozn. timer0 i timer1). Oba z nich zostały wykorzystane w programie. Czasomierze działają na zasadzie zliczania cykli zegara peryferyjnego (PCLK), zapewnianego przez zegar systemowy.
 
 W programie wykorzystane są następujące rejestry timerów:
 
-\subsubsection*{TCR (Timer Control Register):}
+\subsection*{TCR (Timer Control Register):}
 \begin{itemize}
-    \item Adres: 0x004.
+    \item Adres: \texttt{0x004}.
     \item 32-bitowy rejestr kontrolujący stan rejestrów TC i PC.
     \item Zawiera bity sterujące służące do:
     \begin{itemize}
@@ -201,17 +225,17 @@ W programie wykorzystane są następujące rejestry timerów:
     \end{itemize}
 \end{itemize}
 
-\subsubsection*{TC (Timer Counter):}
+\subsection*{TC (Timer Counter):}
 \begin{itemize}
-    \item Adres: 0x008
+    \item Adres: \texttt{0x008}
     \item 32-bitowy rejestr inkrementowany co PR+1 cykli zegara peryferyjnego (PCLK).
     \item Jest kontrolowany przez rejestr TCR.
     \item Wartość w TC odzwierciedla liczbę przepełnień rejestru PC timera od momentu jego uruchomienia.
 \end{itemize}
 
-\subsubsection*{PR (Prescale Register):}
+\subsection*{PR (Prescale Register):}
 \begin{itemize}
-    \item Adres: 0x00C.
+    \item Adres: \texttt{0x00C}.
     \item 32-bitowy rejestr definiujący maksymalną wartość rejestru PC.
     \item Kiedy wartość rejestru PC osiągnie wartość równą tej w rejestrze PR, następuje inkrementacja rejestru TC i wyczyszczenie rejestru PC.
 \end{itemize}
@@ -230,25 +254,25 @@ SystemCoreClock = __SYS_OSC_CLK * ((LPC_SYSCON->SYSPLLCTRL & 0x01F) + 1);
 12\,\mathrm{MHz} \times (0x25 \& 0x1F + 1) = 12\,\mathrm{MHz} \times (5+1) = 72\,\mathrm{MHz}
 \]
 
-\subsubsection*{PC (Prescale Counter):}
+\subsection*{PC (Prescale Counter):}
 \begin{itemize}
-    \item Adres: 0x010.
+    \item Adres: \texttt{0x010}.
     \item 32-bitowy rejestr zliczający.
     \item Wartość rejestru jest inkrementowana z każdym cyklem zegara PCLK.
     \item Kiedy wartość rejestru PC osiągnie wartość równą tej w rejestrze PR, w kolejnym cyklu zegara PCLK następuje inkrementacja rejestru TC i wyczyszczenie rejestru PC.
 \end{itemize}
 
-\subsubsection*{MCR (Match Control Register):}
+\subsection*{MCR (Match Control Register):}
 \begin{itemize}
-    \item Adres: 0x014.
+    \item Adres: \texttt{0x014}.
     \item 32-bitowy rejestr sterujący działaniem rejestrów MR.
     \item Umożliwia ustalenie operacji wykonywanej, gdy nastąpi dopasowanie rejestrów TC i rejestrów MR0-3.
     \item Bity sterujące 0-11 służą do doboru operacji podczas dopasowania rejestru TC z odpowiednim rejestrem MR.
 \end{itemize}
 
-\subsubsection*{IR (Interrupt Register):}
+\subsection*{IR (Interrupt Register):}
 \begin{itemize}
-    \item Adres: 0x000.
+    \item Adres: \texttt{0x000}.
     \item Służy do identyfikacji źródeł wygenerowanych przerwań.
 \end{itemize}
 
@@ -260,35 +284,51 @@ uint32_t prescalerValue = ((SystemFrequency/LPC_SYSCON->SYSAHBCLKDIV) / 1000) - 
 LPC_TMR32B0->PR = prescalerValue;
 LPC_TMR32B0->MCR = 0x00;
 LPC_TMR32B0->TCR = 0x01;
-waitForJoystickCenterClick();
+(...)
 uint32_t reactionTimeMs = LPC_TMR32B0->TC;
 \end{lstlisting}
 
 Opis wartości w rejestrach:
 \begin{itemize}
+    \item Wywołanie funkcji \texttt{init\_timer32(0, 72000)}: inicjalizuje timer \textbf{timer32\_0} z wartością dopasowania 72000, co przy częstotliwości zegara systemowego 72 MHz odpowiada dokładnie 1 ms (72000 taktów / 72 MHz = 0{,}001 s).
     \item Wartość w rejestrze TCR: 0x02 – reset i zatrzymanie liczników rejestrów TC oraz PC.
     \item Wartość w rejestrze PR: częstotliwość zegara systemowego (SystemFrequency/SystemCoreClock) podzielona przez 1000 (by uzyskiwać wynik w milisekundach), a następnie dekrementowana o 1 (ponieważ rejestr TC jest inkrementowany co PR+1 cykli PCLK).
     \item Wartość w rejestrze MCR: 0x00 – reset rejestru / brak czynności przy dopasowaniu rejestrów MR i rejestru TC.
     \item Wartość w rejestrze TCR: 0x01 – uruchomienie liczników rejestrów TC oraz PC.
 \end{itemize}
 
-Opis wykorzystywanej w programie funkcji \texttt{init\_timer32()}:
-\begin{lstlisting}[language=C]
-(...)
-LPC_TMR32B0->MR0 = TimerInterval;
-(...)
-LPC_TMR32B0->MCR = 3;
-\end{lstlisting}
-Gdzie \texttt{TimerInterval} = żądany czas, po którym zostanie zgłoszone przerwanie.
+Funkcja \texttt{init\_timer32(uint8\_t timer\_num, uint32\_t timerInterval)} konfiguruje 32-bitowy timer mikrokontrolera LPC13xx (lub podobnego) poprzez ustawienie odpowiednich rejestrów sterujących.
 
-Opis wartości w rejestrach:
 \begin{itemize}
-    \item Wartość w rejestrze MR0: żądany czas, po którym zostanie zgłoszone przerwanie.
-    \item Wartość w rejestrze MCR: 3 – generowanie przerwania i reset licznika rejestru TC po dopasowaniu rejestrów TC oraz MR0.
+    \item \texttt{timer\_num} – wybór timera (0 dla \texttt{TMR32B0}, 1 dla \texttt{TMR32B1}),
+    \item \texttt{timerInterval} – wartość dopasowania (Match), np. \texttt{72000} dla 1 ms przy zegarze 72 MHz.
 \end{itemize}
 
+\begin{table}[h!]
+\centering
+{\small
+\begin{tabularx}{\textwidth}{|l|p{4cm}|X|}
+\hline
+\textbf{Rejestr} & \textbf{Wartość} & \textbf{Opis} \\
+\hline
+\texttt{TCR} & \texttt{0x02 → 0x00 → 0x01} & Reset licznika (TC, PC), a następnie uruchomienie timera \\
+\hline
+\texttt{PR} & \texttt{(SystemCoreClock / 1000) - 1} & Ustawienie preskalera – tak, aby 1 zliczenie TC odpowiadało 1 ms \\
+\hline
+\texttt{MR0} & \texttt{timerInterval} & Rejestr dopasowania – liczba zliczeń przed akcją (np. 72000 dla 1 sekundy) \\
+\hline
+\texttt{MCR} & \texttt{0x03} & \makecell[l]{Bit 0: przerwanie \\ Bit 1: reset licznika przy dopasowaniu} \\
+\hline
+\texttt{IR} & \texttt{0xFF} & Wyczyszczenie flag przerwań \\
+\hline
+\texttt{NVIC\_EnableIRQ} & -- & Aktywacja przerwań timera w kontrolerze NVIC \\
+\hline
+\end{tabularx}
+}
+\caption{Rejestry konfigurowane przez \texttt{init\_timer32()}}
+\end{table}
+
 Opis wykorzystywanej w programie funkcji \texttt{delay32Ms()}:\\
-\begin{adjustbox}{width=\textwidth}
     \begin{lstlisting}[language=C]
         LPC_TMR32B0->TCR = 0x02; /* reset timer */
         LPC_TMR32B0->PR = 0x00; /* set prescaler to zero */
@@ -299,7 +339,6 @@ Opis wykorzystywanej w programie funkcji \texttt{delay32Ms()}:\\
         /* wait until delay time has elapsed */
         while (LPC_TMR32B0->TCR & 0x01);
     \end{lstlisting}
-\end{adjustbox}
 \vspace{0.5em}
 
 Gdzie \texttt{delayInMs} = żądany czas oczekiwania w milisekundach.
@@ -314,11 +353,7 @@ Opis wartości w rejestrach:
 
 \textbf{Uwaga:} w programie jest używana również funkcja \texttt{delay32Us()} działająca w taki sam sposób, z wyjątkiem dzielenia częstotliwości zegara przez 1000000 zamiast 1000, aby uzyskać wynik w mikrosekundach.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%                      5.2 Dźwięk                        %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection*{2. Dźwięk}
+\section{Dźwięk}
 
 Realizacja dźwięku odbywa się poprzez filtr dolnoprzepustowy PWM oraz wzmacniacz analogowy LM4811.\\
 
@@ -368,11 +403,11 @@ GPIOSetValue( PORT3, 1, 0 ); //LM4811-up/dn
 GPIOSetValue( PORT3, 2, 0 ); //LM4811-shutdn
 \end{lstlisting}
 
-\subsection*{3. Joystick GPIO}
+\section{Joystick GPIO}
 
 Joystick jest urządzeniem peryferyjnym sterowanym za pomocą GPIO (General Purpose Input/Output). Pozycja joysticka jest odczytywana poprzez sprawdzenie stanu pinów GPIO, do których podłączone są przyciski i osie joysticka. Mikrokontroler skanuje piny i wykrywa zmiany stanu, które oznaczają ruch joysticka.
 
-\subsubsection*{Konfiguracja pinów GPIO}
+\subsection*{Konfiguracja pinów GPIO}
 
 Joystick znajduje się na porcie drugim mikrokontrolera i ma 4 piny, które w funkcji \texttt{joystick\_init} mają wartość ustawioną na 0, co oznacza, że ich kierunek jest ustawiony na "wejście" (jeśli byłoby 1, oznaczałoby kierunek "wyjście"):
 \begin{lstlisting}[language=C]
@@ -382,19 +417,19 @@ GPIOSetDir( PORT2, 2, 0 );
 GPIOSetDir( PORT2, 3, 0 );
 \end{lstlisting}
 
-\subsubsection*{Odczyt stanu joysticka}
+\subsection*{Odczyt stanu joysticka}
 
 Joystick korzysta z flag bitowych, które pozwalają na reprezentowanie wielu kierunków jednocześnie za pomocą operacji bitowych OR. Na przykład, jeśli zarówno kierunek góra, jak i prawo są naciśnięte, wartość łączna będzie \texttt{JOYSTICK\_UP | JOYSTICK\_RIGHT}, co daje \texttt{0x02 | 0x10 = 0x12}.
 
-\subsubsection*{Podsumowanie}
+\subsection*{Podsumowanie}
 
 Dzięki takiemu podejściu możliwe jest rozpoznanie wielu stanów joysticka oraz ich kombinacji, co pozwala na intuicyjną obsługę urządzenia w programie.
 
-\subsection*{4. Interfejs SPI}
+\section{Interfejs SPI}
 
 SPI (Serial Peripheral Interface) to szybki, synchroniczny interfejs szeregowy wykorzystywany do komunikacji pomiędzy mikrokontrolerami a różnego rodzaju układami peryferyjnymi, takimi jak wyświetlacze OLED, czujniki czy pamięci. Architektura SPI oparta jest na modelu master-slave, gdzie jeden układ (master) steruje transmisją, a pozostałe (slave) odpowiadają na żądania.
 
-\subsubsection*{Podstawowe linie SPI}
+\subsection*{Podstawowe linie SPI}
 
 Typowa magistrala SPI składa się z czterech linii:
 \begin{itemize}
@@ -404,11 +439,11 @@ Typowa magistrala SPI składa się z czterech linii:
     \item \textbf{SS/CS (Slave Select/Chip Select)} – linia wyboru układu slave, aktywna w stanie niskim.
 \end{itemize}
 
-\subsubsection*{Zasada działania}
+\subsection*{Zasada działania}
 
 Transmisja SPI jest pełnodupleksowa – dane mogą być przesyłane w obu kierunkach jednocześnie. Master inicjuje komunikację, generując sygnał zegarowy i aktywując wybranego slave'a przez obniżenie linii SS. W każdym cyklu zegara jeden bit jest przesyłany z mastera do slave'a (MOSI) i jednocześnie jeden bit z slave'a do mastera (MISO).
 
-\subsubsection*{Tryby pracy (CPOL/CPHA)}
+\subsection*{Tryby pracy (CPOL/CPHA)}
 
 SPI posiada cztery tryby pracy, określane przez polaryzację (CPOL) i fazę (CPHA) sygnału zegara:
 \begin{itemize}
@@ -420,7 +455,7 @@ SPI posiada cztery tryby pracy, określane przez polaryzację (CPOL) i fazę (CP
 
 Wybór odpowiedniego trybu zależy od wymagań urządzenia peryferyjnego. Niezgodność trybów po obu stronach uniemożliwi poprawną komunikację.
 
-\subsubsection*{Konfiguracja SPI w LPC1343}
+\subsection*{Konfiguracja SPI w LPC1343}
 
 W programie inicjalizacja interfejsu SPI wygląda następująco:
 \begin{lstlisting}[language=C]
@@ -437,7 +472,7 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
 
 \textbf{Uwaga praktyczna:} W przypadku kilku urządzeń slave, każde z nich powinno mieć osobną linię SS, sterowaną przez mastera. W stanie nieaktywnym linie SS należy podciągnąć do stanu wysokiego za pomocą rezystorów, aby uniknąć przypadkowej aktywacji urządzeń i konfliktów na magistrali.
 
-\subsubsection*{Topologie połączeń}
+\subsection*{Topologie połączeń}
 
 \begin{itemize}
     \item \textbf{Jeden master, jeden slave:} najprostsza konfiguracja, wszystkie linie są połączone bezpośrednio.
@@ -445,7 +480,7 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
     \item \textbf{Daisy-chain:} slave'y połączone szeregowo, dane przesyłane przez kolejne urządzenia, jeden wspólny sygnał SS.
 \end{itemize}
 
-\subsubsection*{Zalety i ograniczenia SPI}
+\subsection*{Zalety i ograniczenia SPI}
 
 \textbf{Zalety:}
 \begin{itemize}
@@ -461,7 +496,7 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
     \item Brak możliwości adresowania urządzeń na magistrali (w przeciwieństwie do I2C).
 \end{itemize}
 
-\subsubsection*{Zastosowanie w projekcie}
+\subsection*{Zastosowanie w projekcie}
 
 W projekcie interfejs SPI został wykorzystany do komunikacji z wyświetlaczem OLED. Dzięki wysokiej przepustowości możliwa jest szybka aktualizacja zawartości ekranu, co jest kluczowe w grach wymagających dynamicznego odświeżania grafiki.
 
@@ -477,11 +512,11 @@ Powyższy kod ustawia odpowiednie piny jako wyjścia, co pozwala na poprawne ste
 \textbf{Podsumowanie:}  
 SPI jest jednym z najczęściej wykorzystywanych interfejsów do komunikacji z szybkimi peryferiami. Warto pamiętać o poprawnej konfiguracji linii SS oraz zgodności trybów pracy, aby zapewnić bezproblemową transmisję danych.
 
-\subsection*{5. Wyświetlacz OLED}
+\section{Wyświetlacz OLED}
 
 Wyświetlacz OLED użyty w projekcie ma rozdzielczość 96 x 64 piksele i pracuje w oparciu o interfejs SPI. Dzięki technologii OLED zapewnia głęboki kontrast oraz wyraziste kolory, umożliwiając prezentację czytelnych informacji na niewielkiej powierzchni ekranu. W projekcie zastosowano funkcję \texttt{oled\_putChar}, która zamienia podany znak na odpowiednie piksele wyświetlane na ekranie, korzystając z tablicy \texttt{font5x7} zawierającej bitmapy znaków.
 
-\subsubsection*{Budowa i podłączenie wyświetlacza}
+\subsection*{Budowa i podłączenie wyświetlacza}
 
 Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z palety barw RGB i jest wyposażony w kontroler SSD1331. Moduł komunikuje się poprzez interfejs SPI, a napięcie zasilania wynosi od 3,3 do 5 V. Dzięki kompaktowym wymiarom (ok. 27 x 31 mm) oraz wlutowanym goldpinom, integracja z projektem jest bardzo prosta[2][6].\\
 
@@ -496,7 +531,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item CS – wybór układu (chip select)
 \end{itemize}
 
-\subsubsection*{Główne komponenty wyświetlacza OLED}
+\subsection*{Główne komponenty wyświetlacza OLED}
 
 \begin{itemize}
     \item \textbf{Interfejs SPI} – umożliwia szybką komunikację z mikrokontrolerem oraz transfer komend i danych obrazu.
@@ -506,7 +541,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item \textbf{Panel OLED} – matryca diod generujących obraz.
 \end{itemize}
 
-\subsubsection*{Przepływ danych i obsługa wyświetlacza}
+\subsection*{Przepływ danych i obsługa wyświetlacza}
 
 \begin{enumerate}
     \item \textbf{Przesyłanie komend} – mikrokontroler wysyła przez SPI komendy sterujące (np. ustawienia parametrów wyświetlania, reset, inicjalizacja).
@@ -514,7 +549,7 @@ Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z
     \item \textbf{Cykl odświeżania} – kontroler SSD1331 pobiera dane z RAM i steruje diodami OLED, generując widoczny obraz.
 \end{enumerate}
 
-\subsubsection*{Przykład kodu i inicjalizacji pinów}
+\subsection*{Przykład kodu i inicjalizacji pinów}
 
 W kodzie projektu wyświetlacz obsługiwany jest przez funkcje, które zamieniają znaki na bitmapy i przesyłają je przez SPI:
 
@@ -544,7 +579,7 @@ Po inicjalizacji parametrów, włączenie wyświetlacza:
 GPIOSetValue(PORT1, 10, 1 );
 \end{lstlisting}
 
-\subsubsection*{Cechy i zalety wyświetlacza OLED w projekcie}
+\subsection*{Cechy i zalety wyświetlacza OLED w projekcie}
 
 \begin{itemize}
     \item \textbf{Wysoka rozdzielczość} – 96x64 px pozwala na prezentację szczegółowych informacji i prostych grafik.
@@ -556,11 +591,11 @@ GPIOSetValue(PORT1, 10, 1 );
 
 \textbf{Podsumowanie:} Wyświetlacz OLED jest kluczowym elementem interfejsu użytkownika w projekcie – umożliwia prezentację wyników, komunikatów oraz dynamicznych zmian stanu gry w sposób czytelny i atrakcyjny wizualnie.
 
-\subsection*{6. Interfejs I2C}
+\section{Interfejs I2C}
 
 I2C (Inter-Integrated Circuit) to synchroniczny, szeregowy protokół komunikacyjny typu master-slave, wykorzystywany do łączenia mikrokontrolerów z układami peryferyjnymi, takimi jak czujniki, pamięci czy ekspandery portów. W projekcie interfejs I2C służy do komunikacji m.in. z czujnikiem oświetlenia ISL29003.
 
-\subsubsection*{Zasada działania magistrali I2C}
+\subsection*{Zasada działania magistrali I2C}
 
 Magistrala I2C wykorzystuje dwie linie:
 \begin{itemize}
@@ -580,7 +615,7 @@ Transmisja danych odbywa się w postaci komunikatów (messages) podzielonych na 
 
 Adresowanie pozwala na podłączenie do 128 urządzeń slave (przy adresacji 7-bitowej) bez konieczności stosowania dodatkowych linii wyboru, jak w SPI.
 
-\subsubsection*{Konfiguracja sprzętowa na LPC1343}
+\subsection*{Konfiguracja sprzętowa na LPC1343}
 
 Aby uruchomić interfejs I2C w trybie master:
 \begin{lstlisting}[language=C]
@@ -602,7 +637,7 @@ f_{I2C} = \frac{PCLK}{2 \times (SCLH + SCLL)}
 \]
 Dla PCLK = 72\,MHz oraz SCLH = SCLL = 384, uzyskujemy \(f_{I2C} \approx 46,9\,\mathrm{kHz}\).
 
-\subsubsection*{Rejestry I2C w LPC1343}
+\subsection*{Rejestry I2C w LPC1343}
 
 \begin{itemize}
     \item \textbf{I2CONSET/I2CONCLR} – rejestry ustawień i kasowania bitów kontrolnych.
@@ -613,7 +648,7 @@ Dla PCLK = 72\,MHz oraz SCLH = SCLL = 384, uzyskujemy \(f_{I2C} \approx 46,9\,\m
     \item \textbf{I2DATA BUFFER} – bufor odbiorczy.
 \end{itemize}
 
-\subsubsection*{Protokół komunikacji z ISL29003}
+\subsection*{Protokół komunikacji z ISL29003}
 
 Czujnik światła ISL29003 komunikuje się przez I2C jako slave (domyślny adres: 0x44). Odczyt danych z czujnika wymaga wysłania adresu rejestru, z którego chcemy czytać (np. adres LSB lub MSB wyniku pomiaru), a następnie odczytu bajtu danych.
 
@@ -642,18 +677,18 @@ uint32_t light_read(void) {
     \item Przeliczenie wartości na jednostki luksów zgodnie z wybranym zakresem i rozdzielczością czujnika (parametry \texttt{range} i \texttt{width}).
 \end{itemize}
 
-\subsubsection*{Charakterystyka ISL29003}
+\subsection*{Charakterystyka ISL29003}
 
 ISL29003 to zintegrowany czujnik światła z 16-bitowym przetwornikiem ADC, umożliwiający pomiar natężenia światła w szerokim zakresie (do 64\,000 luksów). Czujnik pozwala na wybór zakresu pomiarowego, ustawienie czasu integracji oraz generuje dane proporcjonalne do natężenia światła. Komunikacja przez I2C umożliwia łatwą integrację z mikrokontrolerem i odczyt danych w postaci cyfrowej[2][3][5][6].\\
 
 \textbf{Podsumowanie:}  
 Interfejs I2C zapewnia prostą i niezawodną komunikację z wieloma układami peryferyjnymi na wspólnej magistrali, a dzięki adresowaniu umożliwia obsługę wielu urządzeń bez konieczności dodatkowych linii wyboru. Implementacja obsługi czujnika ISL29003 przez I2C pozwala na szybki i precyzyjny odczyt natężenia światła w czasie rzeczywistym.
 
-\subsection*{7. Linijka diod}
+\section{Linijka diod}
 
 Linijka diod LED w projekcie jest realizowana za pomocą układu PCA9532, będącego 16-bitowym sterownikiem LED z interfejsem I2C. Umożliwia on indywidualne sterowanie stanem oraz jasnością do 16 diod LED, a także generowanie efektów takich jak miganie czy płynne ściemnianie.
 
-\subsubsection*{Charakterystyka PCA9532}
+\subsection*{Charakterystyka PCA9532}
 
 PCA9532 to specjalizowany ekspander I/O zoptymalizowany do sterowania diodami LED. Najważniejsze cechy:
 \begin{itemize}
@@ -665,11 +700,11 @@ PCA9532 to specjalizowany ekspander I/O zoptymalizowany do sterowania diodami LE
     \item Po resecie wszystkie diody są wyłączone (stan wysoki na wyjściach).
 \end{itemize}
 
-\subsubsection*{Podłączenie i adresacja}
+\subsection*{Podłączenie i adresacja}
 
 Wyjścia LED0–LED15 są bezpośrednio połączone z diodami LED przez rezystory ograniczające prąd. Linie SDA i SCL są podciągnięte do zasilania przez rezystory 10 k\si{\ohm}. Adres układu na magistrali I2C ustala się przez odpowiednie podłączenie pinów A0–A2 do masy lub zasilania (w projekcie: 0x60).
 
-\subsubsection*{Sterowanie diodami w programie}
+\subsection*{Sterowanie diodami w programie}
 
 W programie do sterowania diodami wykorzystywane są maski bitowe:
 \begin{itemize}
@@ -688,7 +723,7 @@ ledStateShadow |= ledOnMask;
 \end{lstlisting}
 Po ustaleniu stanu wywoływana jest funkcja \texttt{setLeds()}, która przekazuje stan do PCA9532 przez I2C.
 
-\subsubsection*{Przykład ustawiania stanów diod}
+\subsection*{Przykład ustawiania stanów diod}
 
 Tablica \texttt{ls[]} przechowuje stany LED w 4 bajtach (po 4 diody na bajt). Funkcja \texttt{setLsStates()} ustawia odpowiednie bity:
 \begin{lstlisting}[language=C]
@@ -705,7 +740,7 @@ for (int i = 0; i < 4; i++) {
 \end{lstlisting}
 Makro \texttt{IS\_LED\_SET} sprawdza, czy dany bit odpowiadający diodzie jest ustawiony w masce stanu.
 
-\subsubsection*{Definicje bitów LED}
+\subsection*{Definicje bitów LED}
 
 Każda dioda ma przypisany bit:
 \begin{lstlisting}[language=C]
@@ -715,7 +750,7 @@ Każda dioda ma przypisany bit:
 #define LED19 0x8000 // LED15
 \end{lstlisting}
 
-\subsubsection*{Uwagi praktyczne}
+\subsection*{Uwagi praktyczne}
 
 \begin{itemize}
     \item PCA9532 posiada wewnętrzny oscylator – nie wymaga dodatkowych elementów zewnętrznych.
@@ -727,11 +762,11 @@ Każda dioda ma przypisany bit:
 \textbf{Podsumowanie:}  
 Zastosowanie PCA9532 umożliwia elastyczne i wydajne sterowanie linijką diod LED przez interfejs I2C, z możliwością programowej kontroli jasności, efektów migania oraz łatwej rozbudowy o kolejne linie LED bez zajmowania dodatkowych pinów mikrokontrolera.
 
-\subsection*{8. Moduł EEPROM}
+\section{Moduł EEPROM}
 
 Do zapisu najwyższego wyniku gry wykorzystujemy pamięć nieulotną typu EEPROM, model 24LC08B, podłączoną do magistrali I2C pod adresami od 0x50 do 0x53. Pamięć ta posiada 1024 bajty podzielone na cztery bloki po 256 bajtów każdy. Operacje zapisu i odczytu realizowane są poprzez interfejs I2C, który należy uprzednio zainicjalizować.
 
-\subsubsection*{Adresowanie i organizacja pamięci}
+\subsection*{Adresowanie i organizacja pamięci}
 
 Adres urządzenia EEPROM 24LC08B składa się z:
 \begin{itemize}
@@ -742,7 +777,7 @@ Adres urządzenia EEPROM 24LC08B składa się z:
 
 Dzięki temu możliwe jest kaskadowanie do czterech bloków pamięci (4 x 256 bajtów), co daje łącznie 1024 bajty.
 
-\subsubsection*{Funkcje zapisu i odczytu}
+\subsection*{Funkcje zapisu i odczytu}
 
 Do zapisu danych wykorzystywana jest funkcja:
 \begin{lstlisting}[language=C]
@@ -766,7 +801,7 @@ gdzie:
     \item \texttt{len} – liczba bajtów do odczytania.
 \end{itemize}
 
-\subsubsection*{Procedura odczytu}
+\subsection*{Procedura odczytu}
 
 Operacja odczytu wymaga najpierw wysłania adresu wewnętrznego pamięci, z którego chcemy czytać, poprzez zapis na magistrali I2C, a następnie odczytu danych. Przykładowy fragment kodu ilustrujący tę procedurę:
 
@@ -785,7 +820,7 @@ I2CRead((addr << 1), buf, len);
     \item \texttt{I2CRead} – funkcja odczytująca dane z pamięci EEPROM.
 \end{itemize}
 
-\subsubsection*{Opis działania}
+\subsection*{Opis działania}
 
 \begin{itemize}
     \item Po wysłaniu adresu wewnętrznego następuje opóźnienie (np. pętla \texttt{for}), które pozwala na zakończenie wewnętrznego cyklu zapisu lub przygotowanie danych do odczytu.
@@ -794,7 +829,7 @@ I2CRead((addr << 1), buf, len);
     \item Możliwe jest wykonywanie operacji page write (zapis do 16 bajtów na raz), gdzie adres wewnętrzny automatycznie się inkrementuje, a po przekroczeniu rozmiaru strony następuje nadpisanie danych od początku strony.
 \end{itemize}
 
-\subsubsection*{Zalecenia i uwagi}
+\subsection*{Zalecenia i uwagi}
 
 \begin{itemize}
     \item Pin WP (Write Protect) powinien być podłączony do masy (VSS), aby umożliwić zapis do całej pamięci.
@@ -803,15 +838,15 @@ I2CRead((addr << 1), buf, len);
     \item Podczas programowania strony (page write) należy uważać, aby nie przekroczyć 16 bajtów, gdyż nadmiar danych spowoduje nadpisanie początkowych bajtów strony.
 \end{itemize}
 
-\subsubsection*{Podsumowanie}
+\subsection*{Podsumowanie}
 
 Moduł EEPROM 24LC08B zapewnia trwałe przechowywanie danych, takich jak rekordowe wyniki gry, dzięki czemu możliwe jest ich zachowanie po wyłączeniu zasilania. Komunikacja przez interfejs I2C oraz mechanizmy adresowania blokowego umożliwiają efektywne zarządzanie pamięcią i prostą integrację z mikrokontrolerem LPC1343.
 
-\subsection*{9. Akcelerometr}
+\section{Akcelerometr}
 
 Akcelerometr MMA7455L to trójosiowy cyfrowy czujnik MEMS, umożliwiający pomiar przyspieszenia wzdłuż osi X, Y i Z. W projekcie wykorzystano komunikację przez interfejs I2C. Urządzenie to znajduje szerokie zastosowanie w elektronice użytkowej, m.in. do detekcji ruchu, orientacji, wstrząsów czy swobodnego opadania.
 
-\subsubsection*{Główne cechy MMA7455L}
+\subsection*{Główne cechy MMA7455L}
 
 \begin{itemize}
     \item Cyfrowe wyjście (I2C lub SPI, w projekcie użyto I2C)
@@ -823,11 +858,11 @@ Akcelerometr MMA7455L to trójosiowy cyfrowy czujnik MEMS, umożliwiający pomia
     \item Niska konsumpcja prądu: ok. 0,5 mA w trybie pracy, 26–42 µA w standby[3]
 \end{itemize}
 
-\subsubsection*{Zasada działania i podłączenie}
+\subsection*{Zasada działania i podłączenie}
 
 Układ MMA7455L to mikromechaniczny system MEMS – miniaturowa masa zawieszona na sprężynach, której odchylenie pod wpływem przyspieszenia jest mierzone i przetwarzane na sygnał cyfrowy przez wbudowany przetwornik ADC. Moduł posiada wyprowadzenia do komunikacji I2C (SDA, SCL) oraz dwa wyjścia przerwań (INT1, INT2), które można podłączyć do mikrokontrolera. W celu ochrony linii przerwań i komunikacyjnych stosuje się rezystory szeregowe 270 \si{\ohm}.
 
-\subsubsection*{Odczyt danych z akcelerometru}
+\subsection*{Odczyt danych z akcelerometru}
 
 Do odczytu przyspieszenia wzdłuż trzech osi wykorzystywana jest funkcja \texttt{acc\_read()}:
 
@@ -865,7 +900,7 @@ void acc_read (int8_t *x, int8_t *y, int8_t *z)
     \end{itemize}
 \end{itemize}
 
-\subsubsection*{Inicjalizacja akcelerometru}
+\subsection*{Inicjalizacja akcelerometru}
 
 Funkcja \texttt{acc\_init()} ustawia tryb pracy na pomiarowy i wybiera zakres pomiarowy:
 
@@ -884,11 +919,11 @@ void acc_init (void)
     \item Parametry są przekazywane do rejestru kontrolnego przez funkcję \texttt{setModeControl()}.
 \end{itemize}
 
-\subsubsection*{Przetwarzanie i interpretacja danych}
+\subsection*{Przetwarzanie i interpretacja danych}
 
 Odczytane wartości są liczbami ze znakiem (\texttt{int8\_t}), których zakres odpowiada wybranemu zakresowi pomiarowemu. Przykładowo, dla zakresu \(\pm2g\), wartość 64 odpowiada przyspieszeniu 1g (czułość 64 LSB/g)[3]. Dzięki temu możliwe jest wykrywanie ruchów, przechyłów, wstrząsów czy swobodnego opadania układu.
 
-\subsubsection*{Uwagi praktyczne}
+\subsection*{Uwagi praktyczne}
 
 \begin{itemize}
     \item W projekcie akcelerometr służy m.in. do wykrywania przechylenia płytki (np. do resetowania rekordu).
@@ -899,11 +934,11 @@ Odczytane wartości są liczbami ze znakiem (\texttt{int8\_t}), których zakres 
 \textbf{Podsumowanie:}  
 MMA7455L umożliwia precyzyjny pomiar przyspieszenia w trzech osiach, jest łatwy w integracji dzięki interfejsowi I2C i stanowi uniwersalny komponent do detekcji ruchu, orientacji oraz zdarzeń dynamicznych w systemach wbudowanych.
 
-\subsection*{10. Czujnik oświetlenia ISL29003}
+\section{Czujnik oświetlenia ISL29003}
 
 ISL29003 to zintegrowany czujnik światła wyposażony w 16-bitowy przetwornik ADC oraz programowalny zakres pomiarowy w luksach. Czujnik obsługuje sprzętowe wyjście przerwania, które pozostaje aktywne w stanie niskim do momentu zresetowania go przez hosta za pośrednictwem interfejsu I2C. ISL29003 został zaprojektowany do pracy z napięciem zasilania od 2,5\,V do 3,3\,V. Jest stale podłączony do magistrali I2C, a jego wyjście przerwania może być podłączone do pinu PIO2\_5 mikrokontrolera. W celu ochrony linii przed uszkodzeniem, w przypadku gdy sygnałem steruje więcej niż jeden sterownik, zastosowano szeregowy rezystor o wartości 270~$\Omega$.
 
-\subsubsection*{Odczyt natężenia światła – funkcja \texttt{light\_read()}}
+\subsection*{Odczyt natężenia światła – funkcja \texttt{light\_read()}}
 
 Do odczytu natężenia światła wykorzystywana jest funkcja \texttt{light\_read()}, która komunikuje się z czujnikiem poprzez protokół I2C:
 
@@ -947,7 +982,7 @@ uint32_t light_read(void)
 \end{itemize}
 
 
-\subsubsection*{Włączanie i konfiguracja czujnika – funkcja \texttt{light\_enable()}}
+\subsection*{Włączanie i konfiguracja czujnika – funkcja \texttt{light\_enable()}}
 
 Do aktywacji i konfiguracji czujnika służy funkcja:
 
@@ -973,7 +1008,7 @@ void light_enable (void)
     \item \texttt{width = WIDTH\_16\_VAL;} – ustawia szerokość (np. 1 << 16), co oznacza 16-bitową rozdzielczość pomiaru.
 \end{itemize}
 
-\subsubsection*{Uwagi praktyczne i integracja sprzętowa}
+\subsection*{Uwagi praktyczne i integracja sprzętowa}
 
 \begin{itemize}
     \item ISL29003 jest stale podłączony do magistrali I2C i komunikuje się poprzez adres \texttt{LIGHT\_I2C\_ADDR} (0x44 << 1).
@@ -982,8 +1017,7 @@ void light_enable (void)
     \item Czujnik umożliwia szybkie i precyzyjne pomiary natężenia światła, co jest wykorzystywane m.in. do adaptacyjnego sterowania jasnością wyświetlacza lub jako źródło ziarna dla generatora losowego w aplikacji.
 \end{itemize}
 
-
-\section*{6. Analiza skutków awarii (FMEA)}
+\chapter{Analiza skutków awarii (FMEA)}
 \textbf{Tabela 3. Analiza FMEA (Failure Mode and Effect Analysis).}
 \centering
 \resizebox{\textwidth}{!}{
@@ -1002,4 +1036,5 @@ void light_enable (void)
         \hline
     \end{tabular}
 }
+
 \end{document}
