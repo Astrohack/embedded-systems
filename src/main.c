@@ -1,6 +1,7 @@
 /*****************************************************************************
  *   Project: Reflex
- *   Description: This program simulates a game to measure the user's reaction time based on a visual trigger.
+ *   Description: This program simulates a game to measure the user's 
+ *                reaction time based on a visual trigger.
  *
  *   Authors:
  *
@@ -26,93 +27,311 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Macros for controlling speaker pin */
 #define P1_2_HIGH() (LPC_GPIO1->DATA |= ((uint16_t)0x1<<2))
 #define P1_2_LOW()  (LPC_GPIO1->DATA &= ~((uint16_t)0x1<<2))
+
+/* I/O direction macros */
 #define LOW 0
 #define HIGH 1
 #define OUTPUT 1
 #define INPUT 0
 
+/* ----- Speaker -----> */
+#define MENU_ITEM_COUNT 4
 
-/*****************************************************************************
-** Function name:		waitForJoystickCenterClick
-**
-** Descriptions:		Waits for the joystick center button to be clicked
-**
-** parameters:			None
-** Returned value:		None
-**
-*****************************************************************************/
-static void waitForJoystickCenterClick(void) {
-    uint8_t joyState = joystick_read();
-    while ((joyState & JOYSTICK_CENTER) == 0) {
-        joyState = joystick_read();
-    }
-}
+typedef enum {
+    MENU_START_GAME = 0,
+    MENU_RESET_SCORE,
+    MENU_CREDITS,
+    MENU_EXIT
+} MenuItem;
 
+static const char *menuItems[MENU_ITEM_COUNT] = {
+    "Start game",
+    "Reset score",
+    "Credits",
+    "Exit"
+};
+
+static int selectedIndex = 0;
+/* <---- Menu ------ */
+
+typedef struct {
+    int8_t xOffset;
+    int8_t yOffset;
+    int8_t zOffset;
+    int8_t x;
+    int8_t y;
+    int8_t z;
+} TiltState;
+static TiltState tilt;
+
+/* Frequencies for musical notes in timer units */
 static uint32_t notes[] = {
-        2272, // A - 440 Hz
-        2024, // B - 494 Hz
-        3816, // C - 262 Hz
-        3401, // D - 294 Hz
-        3030, // E - 330 Hz
-        2865, // F - 349 Hz
-        2551, // G - 392 Hz
-        1136, // a - 880 Hz
-        1012, // b - 988 Hz
-        1912, // c - 523 Hz
-        1703, // d - 587 Hz
-        1517, // e - 659 Hz
-        1432, // f - 698 Hz
-        1275, // g - 784 Hz
+    2272, // A - 440 Hz
+    2024, // B - 494 Hz
+    3816, // C - 262 Hz
+    3401, // D - 294 Hz
+    3215, // D# - 311 Hz
+    3030, // E - 330 Hz
+    2865, // F - 349 Hz
+    2703, // F# - 370 Hz
+    2551, // G - 392 Hz
+    2146, // A# - 466 Hz
+    1136, // a - 880 Hz
+    1012, // b - 988 Hz
+    1912, // c - 523 Hz
+    1703, // d - 587 Hz
+    1517, // e - 659 Hz
+    1432, // f - 698 Hz
+    1275, // g - 784 Hz
 };
 
 /*****************************************************************************
-** Function name:		playNote
+** Function name:       drawMenu
 **
-** Descriptions:		Plays a given note for a given duration
+** Description:         Renders the menu on OLED with selection highlight
 **
-** parameters:			note - the frequency of the note, durationMs - the play duration in milliseconds
-** Returned value:		None
-**
+** Parameters:          None
+** Returned value:      None
 *****************************************************************************/
-static void playNote(uint32_t note, uint32_t durationMs) {
+static void draw_menu(void) {
+    oled_clearScreen(backgroundColor);
 
+    for (int i = 0; i < MENU_ITEM_COUNT; i++) {
+        uint8_t y = 2 + i * 12;
+
+        // Add arrow to selected item
+        char buffer[20];
+        snprintf(buffer, sizeof(buffer), "%c %s", (i == selectedIndex ? '>' : ' '), menuItems[i]);
+
+        oled_putString(4, y, (const uint8_t *)buffer, fontColor, backgroundColor);
+    }
+}
+
+/*****************************************************************************
+** Function name:       handleMenu
+**
+** Description:         Runs the menu system and handles joystick input
+**
+** Parameters:          None
+** Returned value:      Selected item index (0-based)
+*****************************************************************************/
+static int handle_menu(void) {
+    uint8_t previous_joy = 0xFF;
+    while (1) {
+        uint8_t joy = joystick_read();
+
+        if ((joy & JOYSTICK_DOWN) && !(previous_joy & JOYSTICK_DOWN)) {
+            selectedIndex = (selectedIndex + 1) % MENU_ITEM_COUNT;
+            draw_menu();
+        } else if ((joy & JOYSTICK_UP) && !(previous_joy & JOYSTICK_UP)) {
+            selectedIndex = (selectedIndex - 1 + MENU_ITEM_COUNT) % MENU_ITEM_COUNT;
+            draw_menu();
+        } else if ((joy & JOYSTICK_CENTER) && !(previous_joy & JOYSTICK_CENTER)) {
+            return selectedIndex;
+        }
+
+        previous_joy = joy;
+
+        if (is_board_tilted()) {
+            resetHighScore(9999);
+            oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
+            delay32Ms(0, 500);
+        }
+        adjust_theme();
+        delay32Ms(0, 100);
+    }
+}
+
+static void show_main_menu(void) {
+    while(1) {
+        draw_menu();
+        MenuItem selection = handle_menu();
+
+        switch (selection) {
+            case MENU_START_GAME:
+                play_note(notes[0], 200);
+                start_game();
+                break;
+
+            case MENU_RESET_SCORE:
+                resetHighScore(9999);
+                oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
+                play_note(notes[1], 200);
+                break;
+
+            case MENU_CREDITS:
+                oled_clearScreen(backgroundColor);
+                oled_putStringHorizontallyCentered(20, "by Patryk Krawczyk");
+                play_star_wars_theme();
+                break;
+
+            case MENU_EXIT:
+                oled_clearScreen(backgroundColor);
+                oled_putStringHorizontallyCentered(20, "Exiting...");
+                play_note(notes[10], 200);
+                play_note(notes[5], 200);
+                play_note(notes[1], 200);
+                delay32Ms(0, 400);
+                return;
+        }
+    }
+}
+
+/*****************************************************************************
+** Function name:       play_star_wars_theme
+**
+** Descriptions:        Plays a star wars theme melody consisting of predefined notes
+**
+** parameters:          None
+** Returned value:      None
+*****************************************************************************/
+void play_star_wars_theme(void) {
+    play_note(notes[9], 200); 
+    play_note(notes[9], 200); 
+    play_note(notes[4], 150);
+    play_note(notes[9], 200); 
+    play_note(notes[11], 200);
+    play_note(notes[9], 200); 
+    play_note(notes[4], 150);
+    play_note(notes[11], 200);
+    play_note(notes[9], 200); 
+
+    delay32Ms(0, 200);
+
+    play_note(notes[4], 150);
+    play_note(notes[4], 150);
+    play_note(notes[3], 200); 
+    play_note(notes[9], 200); 
+    play_note(notes[4], 150);
+    play_note(notes[11], 200);
+    play_note(notes[9], 250); 
+
+    delay32Ms(0, 200);
+
+    play_note(notes[17], 150);
+    play_note(notes[17], 150);
+    play_note(notes[17], 150);
+    play_note(notes[4], 150);
+    play_note(notes[11], 200);
+    play_note(notes[9], 300); 
+}
+
+
+static void init_tilt_calibration(void) {
+    acc_read(&tilt.x, &tilt.y, &tilt.z);
+    tilt.xOffset = -tilt.x;
+    tilt.yOffset = -tilt.y;
+    tilt.zOffset = 64 - tilt.z;
+}
+
+static bool is_board_tilted(void) {
+    acc_read(&tilt.x, &tilt.y, &tilt.z);
+
+    tilt.x += tilt.xOffset;
+    tilt.y += tilt.yOffset;
+    tilt.z += tilt.zOffset;
+
+    if ((tilt.x > 30) || (tilt.x < -30) || (tilt.y > 30) || (tilt.y < -30)) {
+        return true;
+    }
+
+    return false;
+}
+
+/*****************************************************************************
+** Function name:       wait_for_joystick_center_click
+**
+** Description:         Blocks until the joystick center button is pressed.
+**
+** Parameters:          None
+** Returned value:      None
+*****************************************************************************/
+static void wait_for_joystick_center_click(void) {
+    while ((joystick_read() & JOYSTICK_CENTER) == 0) {
+        delay32Ms(0, 100);
+    }
+}
+
+void draw_circle(uint8_t x0, uint8_t y0, uint8_t radius, oled_color_t color) {
+    int16_t x = radius;
+    int16_t y = 0;
+    int16_t err = 0;
+
+    while (x >= y) {
+        oled_putPixel(x0 + x, y0 + y, color);
+        oled_putPixel(x0 + y, y0 + x, color);
+        oled_putPixel(x0 - y, y0 + x, color);
+        oled_putPixel(x0 - x, y0 + y, color);
+        oled_putPixel(x0 - x, y0 - y, color);
+        oled_putPixel(x0 - y, y0 - x, color);
+        oled_putPixel(x0 + y, y0 - x, color);
+        oled_putPixel(x0 + x, y0 - y, color);
+
+        y += 1;
+        if (err <= 0) {
+            err += 2 * y + 1;
+        } 
+        if (err > 0) {
+            x -= 1;
+            err -= 2 * x + 1;
+        }
+    }
+}
+
+void fill_circle(uint8_t x0, uint8_t y0, uint8_t radius, oled_color_t color) {
+    for (int16_t y = -radius; y <= radius; y++) {
+        for (int16_t x = -radius; x <= radius; x++) {
+            if (x * x + y * y <= radius * radius) {
+                oled_putPixel(x0 + x, y0 + y, color);
+            }
+        }
+    }
+}
+
+/*****************************************************************************
+** Function name:       play_note
+**
+** Description:         Generates a square wave of the given frequency
+**                      for a specified duration (in ms) on speaker pin.
+**
+** Parameters:          note - frequency period in µs
+**                      durationMs - duration to play the note
+** Returned value:      None
+*****************************************************************************/
+static void play_note(uint32_t note, uint32_t durationMs) {
 	uint32_t t = 0;
-
     if (note > (uint32_t)0) {
-
         while (t < (durationMs * (uint32_t)1000)) {
             P1_2_HIGH();
             delay32Us(0, note / (uint32_t)4);
-
             P1_2_LOW();
             delay32Us(0, note / (uint32_t)4);
-
             t += note;
         }
-
     }
     else {
         delay32Ms(0, durationMs);
     }
 }
 
+/* OLED color variables for foreground/background */
 static oled_color_t fontColor;
 static oled_color_t backgroundColor;
 
 /*****************************************************************************
-** Function name:       adjustColors
+** Function name:       adjust_theme
 **
-** Descriptions:        Changes color style based on readings from light sensor
+** Description:         Reads ambient light sensor and adjusts display
+**                      theme (dark/light mode) accordingly.
 **
-** parameters:          None
-** Returned value:      1 if style has changed else 0 
-**
+** Parameters:          None
+** Returned value:      1 if color theme changed, 0 otherwise
 *****************************************************************************/
-static uint32_t adjustColors(void) {
+static void adjust_theme(void) {
     uint32_t reading = light_read();
-    uint32_t limit = 250;
     uint32_t prev_fontColor = fontColor;
     if (reading < 125) {
         fontColor = OLED_COLOR_WHITE;
@@ -121,31 +340,91 @@ static uint32_t adjustColors(void) {
         fontColor = OLED_COLOR_BLACK;
         backgroundColor = OLED_COLOR_WHITE;
     }
-    return fontColor != prev_fontColor;
+    if (fontColor != prev_fontColor) {
+        play_note(notes[0],200);
+    } else {
+        play_note(notes[4],200);
+    }
 }
 
 /*****************************************************************************
-** Function name:       resetHighScore
+** Function name:		moveBar
 **
-** Descriptions:        Resets eeprom high score value
+** Descriptions:		Moves the LED bar by one position
 **
-** parameters:          value to be set as high score
-** Returned value:      None
+** parameters:			None
+** Returned value:		None
 **
 *****************************************************************************/
-void resetHighScore(uint16_t value) {
+static void set_led_bar_position(uint8_t pos)
+{
+    uint16_t ledOn;
+    ledOn = (uint16_t)0x01 << pos;
+    pca9532_setLeds(ledOn, 0xffff);
+}
+
+
+/*****************************************************************************
+** Function name:       set_high_score
+**
+** Description:         Stores new high score value into EEPROM.
+**
+** Parameters:          value - new high score (ms)
+** Returned value:      None
+*****************************************************************************/
+void set_high_score(uint16_t value) {
 	uint8_t buf[2];
 	buf[0]= (value & (uint16_t)0xFF00) >> 8;
 	buf[1]= (value & (uint16_t)0x00FF);
 	eeprom_write(buf,0,2);
 }
 
+uint16_t read_high_score() {
+	uint8_t readBuf[2];
+    eeprom_read(readBuf, 0, 2);
+	return ((uint16_t)readBuf[0] << 8) | (uint16_t)readBuf[1];
+}
+
+/*****************************************************************************
+** Function name:		measure_reaction_time
+**
+** Descriptions:		Measures the reaction time of the user in milliseconds
+**
+** parameters:			None
+** Returned value:		None
+**
+*****************************************************************************/
+static int measure_reaction_time(void) {
+    init_timer32(1, 72000);
+    LPC_TMR32B1->TCR = 0x02;
+    uint32_t prescalerValue = ((SystemFrequency/LPC_SYSCON->SYSAHBCLKDIV) / 1000) - 1;
+    LPC_TMR32B1->PR = prescalerValue;
+    LPC_TMR32B1->MCR = 0x00;
+    LPC_TMR32B1->TCR = 0x01;
+
+    wait_for_joystick_center_click();
+
+    uint32_t reactionTimeMs = LPC_TMR32B1->TC;
+    char reactionTimeMsString[5];
+    int n = sprintf(reactionTimeMsString, "%u", reactionTimeMs);
+    return n
+}
+
+/*****************************************************************************
+** Function name:		oled_putStringHorizontallyCentered
+**
+** Descriptions:		Puts a horizontally centered string at a given vertical coordinate of the OLED display
+**
+** parameters:			y - vertical coordinate, text - the text to display
+** Returned value:		None
+*****************************************************************************/
 static void oled_putStringHorizontallyCentered(uint8_t y, const char text[]) {
     int textLength = strlen(text);
     oled_putString((OLED_DISPLAY_WIDTH - (textLength * 5)) / 2, y, (const uint8_t *)text, fontColor, backgroundColor);
 }
 
-static void startingScreenOled(void) {
+/* Displays the initial splash screen with high score */
+static void show_welcome_screen(void) {
     oled_clearScreen(backgroundColor);
     oled_putStringHorizontallyCentered(2, "Witaj w grze");
     oled_putStringHorizontallyCentered(12, "REFLEKS");
@@ -160,14 +439,23 @@ static void startingScreenOled(void) {
     char highScoreMsString[8];
     sprintf(highScoreMsString, "%u ms", highScoreMs);
     oled_putStringHorizontallyCentered(42, highScoreMsString);
+    wait_for_joystick_center_click();
 }
 
-/**
-* Animacja startowa: prosty "loading" z kropkami
-*/
-static void playStartupAnimation(void) {
+
+/*****************************************************************************
+** Function name:       play_startup_animation
+**
+** Description:         Shows a short "boot up" animation on OLED with
+**                      themed quotes and loading dots.
+**
+** Parameters:          None
+** Returned value:      None
+*****************************************************************************/
+static void play_startup_animation(void) {
+    play_note(notes[3], 200);
 	const char *frames[] = {".", "..", "..."};
-	const char *quotes[] = {"Heating up systems", "Thrusters online", "Firing lasers"};
+	const char *quotes[] = {"Heat up...", "Thrust OK", "Fire laser", "Weapons armed", "AI synced", "Engines online", "Core stable", "Warp ready", "Scanning...",};
 	for (int i = 0; i < 3; i++) {
 		const char *str = quotes[i];
 		for (int f = 0; f < 3; f++) {
@@ -177,185 +465,55 @@ static void playStartupAnimation(void) {
 			delay32Ms(0, 300);
 		}
 	}
+    init_tilt_calibration();
 }
 
 
+static void start_game(void) {
+    uint8_t round = 0;
+    while (round < 5) {
+        set_led_bar_position(round);
+        adjust_theme();
+        oled_clearScreen(backgroundColor);
+        draw_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
+        oled_putStringCentered("Czekaj...");
+        play_note(notes[2], 250);
+
+        uint32_t randomDelay = (rand() % 3000) + 500;
+        delay32Ms(1, randomDelay);
+        fill_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
+
+        measure_reaction_time();
+        oled_clearScreen(backgroundColor);
+        char * str = strcat(reactionTimeMsString, " ms");
+        oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2, reactionTimeMsString);
+
+        // Update high score
+        uint16_t highScoreMs = getHighScore();
+        if ((reactionTimeMs < highScoreMs) || (highScoreMs == (uint16_t)0)) {
+            set_high_score(reactionTimeMs);
+        }
+        round++;
+        wait_for_joystick_center_click();
+    }
+}
+
+/*****************************************************************************
+** Function name:       main
+**
+** Description:         Entry point of the program. Initializes peripherals,
+**                      displays intro screen, and enters idle loop that
+**                      monitors for color mode change.
+*****************************************************************************/
 int main(void) {
     // 1) Inicjalizacja GPIO (konieczna do działania wielu peryferiów)
     GPIOInit();
 
-    // 2) Timer tylko do opóźnień lub jako część wymagań checkpointa
-
-    /******************************************************************************
-     * TIMER (Timer/Counter) - Overview
-     *
-     * Timers in the LPC1343 family are 32-bit Timer/Counter peripherals used for:
-     *   • Measuring time intervals
-     *   • Generating periodic interrupts
-     *   • Creating PWM signals (basic)
-     *   • External event counting via CAPx pins
-     *
-     * Each timer (TIMER0, TIMER1, TIMER2, TIMER3) can run independently.
-     *
-     * =============================================================================
-     * Operating Modes:
-     * -----------------------------------------------------------------------------
-     *  • Timer Mode     : Counts based on PCLK (Peripheral Clock)
-     *  • Counter Mode   : Counts external events on CAPx.x pin (rising/falling/both edges)
-     *
-     * =============================================================================
-     * Key Features:
-     * -----------------------------------------------------------------------------
-     *  • Match Control:
-     *     - Up to 4 match registers (MR0–MR3)
-     *     - Actions on match: interrupt, reset, stop timer
-     *
-     *  • Capture Control:
-     *     - Up to 4 capture channels (CAP0.0–CAP0.3)
-     *     - Capture current TC value on external signal edge
-     *
-     *  • Interrupts:
-     *     - Match interrupts (MR0–MR3)
-     *     - Capture interrupts (CAP0–CAP3)
-     *
-     * =============================================================================
-     * TIMERx Registers (Base Address: TIMER0 = 0x40004000)
-     * -----------------------------------------------------------------------------
-     *  Register Name    | Offset | Description
-     *  -----------------|--------|-----------------------------------------------
-     *  IR               | 0x00   | Interrupt Register (match/capture flags)
-     *  TCR              | 0x04   | Timer Control Register (enable, reset)
-     *  TC               | 0x08   | Timer Counter (counts time/ticks)
-     *  PR               | 0x0C   | Prescale Register (divide PCLK)
-     *  PC               | 0x10   | Prescale Counter (increases until PR match)
-     *  MCR              | 0x14   | Match Control Register (actions on match)
-     *  MR0–MR3          | 0x18–0x24 | Match Registers (compare against TC)
-     *  CCR              | 0x28   | Capture Control Register
-     *  CR0–CR3          | 0x2C–0x38 | Capture Registers
-     *  EMR              | 0x3C   | External Match Register (control EMx pins)
-     *  CTCR             | 0x70   | Count Control Register (Timer/Counter mode select)
-     *
-     * =============================================================================
-     * Notes:
-     * -----------------------------------------------------------------------------
-     *  • Timers are driven by PCLK (Peripheral Clock)
-     *    - PCLK_TIMERx = CCLK / divider (configurable in PCLKSELx)
-     *
-     *  • To use:
-     *    1. Enable timer peripheral via PCONP (bit 1 = TIMER0, bit 2 = TIMER1, etc.)
-     *    2. Configure match/capture registers and control bits
-     *    3. Enable timer by setting TCR |= (1 << 0)
-     *
-     *  • Match example:
-     *      - Set MR0 = desired_ticks
-     *      - Configure MCR to generate interrupt or reset TC on match
-     *
-     *  • Capture example:
-     *      - Enable capture on rising/falling edge of CAPx.x pin
-     *      - Value of TC is latched into CRx on external event
-     *
-     ******************************************************************************/
     init_timer32(0, 10);
+    init_timer32(1, 10);
 
-    // 3) Inicjalizacja magistrali I2C i SSP (OLED wymaga SSP)
-    /******************************************************************************
-     * I2C (Inter-Integrated Circuit) - Overview
-     *
-     *  - Synchronous, multi-master, multi-slave serial communication protocol
-     *  - Only 2 lines required:
-     *      - SDA: Serial Data Line
-     *      - SCL: Serial Clock Line
-     *  - Supports multiple devices on the same bus (identified by 7-bit addresses)
-     *
-     *  Communication basics:
-     *      - Master initiates communication
-     *      - Start condition -> Address + R/W bit -> ACK/NACK -> Data transfer -> Stop condition
-     *      - Each data transfer is 8 bits, followed by an ACK/NACK bit
-     *
-     *  Use cases:
-     *      - EEPROMs, light sensor, ADCs, DACs, etc.
-     *
-     *  =============================================================================
-     *  LPC I2C0 Registers (Base address: 0x4001C000)
-     *  -----------------------------------------------------------------------------
-     *  Register Name    | Address Offset | Description
-     *  -----------------|----------------|------------------------------------------
-     *  I2CONSET         | 0x000          | Control Set Register (start, enable, etc.)
-     *  I2STAT           | 0x004          | Status Register (I2C state machine codes)
-     *  I2DAT            | 0x008          | Data Register (read/write data)
-     *  I2ADR0           | 0x00C          | Slave Address Register 0
-     *  I2SCLH           | 0x010          | SCL Duty Cycle High Half Word
-     *  I2SCLL           | 0x014          | SCL Duty Cycle Low Half Word
-     *  I2CONCLR         | 0x018          | Control Clear Register (clear flags)
-     *  I2MMCTRL         | 0x01C          | Monitor mode control (optional)
-     *  I2ADR1           | 0x020          | Slave Address Register 1
-     *  I2ADR2           | 0x024          | Slave Address Register 2
-     *  I2ADR3           | 0x028          | Slave Address Register 3
-     *  I2DATA_BUFFER    | 0x02C          | Data buffer register (monitor mode)
-     *
-     *  To use I2C:
-     *   1. Power up I2C peripheral and set PCLK
-     *   2. Configure pins (e.g., P0.27 = SDA, P0.28 = SCL via IOCON)
-     *   3. Set SCLH/SCLL for desired clock speed
-     *   4. Set I2EN bit in I2CONSET to enable I2C
-     *   5. Use state codes in I2STAT to drive the I2C master/slave logic
-     ******************************************************************************/
     I2CInit((uint32_t)I2CMASTER, 0);
 
-    /******************************************************************************
-     * SPI (Serial Peripheral Interface) - Overview
-     *
-     * SPI is a full-duplex, synchronous serial communication protocol used to
-     * transfer data between electronic devices. It follows a master-slave architecture.
-     *
-     * Signal Lines:
-     *   • SCK  (Serial Clock)       : Clock signal generated by the master to sync data transfer
-     *   • MOSI (Master Out, Slave In): Data line from master to slave
-     *   • MISO (Master In, Slave Out): Data line from slave to master
-     *   • SS   (Slave Select)        : Optional line used by the master to activate a specific slave
-     *
-     * How SPI Works:
-     *   • The master initiates communication by:
-     *       - Generating the SCK signal
-     *       - Pulling the SS line low (if used) to select the target slave
-     *
-     *   • Data Transmission:
-     *       - The master sends data bit-by-bit over MOSI
-     *       - The slave simultaneously sends data over MISO
-     *       - Data is clocked on one edge of SCK (configurable via CPHA)
-     *
-     *   • End of Communication:
-     *       - The master pulls SS high (if used), ending the session
-     *
-     * Clock Configuration:
-     *   • CPOL (Clock Polarity): Sets idle level of SCK (0 = low, 1 = high)
-     *   • CPHA (Clock Phase)   : Defines which SCK edge is used for sampling
-     *
-     * Data Format:
-     *   • Usually 8 bits per frame, but 4–16 bits supported by some peripherals
-     *   • Most Significant Bit (MSB) first, configurable
-     *
-     * =============================================================================
-     * LPC1343 SPI0 Hardware Registers (Base Address: 0x40020000)
-     * -----------------------------------------------------------------------------
-     *  Register Name    | Address Offset | Description
-     *  -----------------|----------------|------------------------------------------
-     *  SPCR             | 0x000          | SPI Control Register (enable, CPOL, CPHA, bits)
-     *  SPSR             | 0x004          | SPI Status Register (SPIF, WCOL, etc.)
-     *  SPDR             | 0x008          | SPI Data Register (read/write)
-     *  SPCCR            | 0x00C          | SPI Clock Counter Register (must be even ≥ 8)
-     *  SPINT            | 0x01C          | SPI Interrupt Register (status flag)
-     *
-     *  Example Init Steps for Master Mode:
-     *   1. Power up SSP [LPC_SYSCON->PRESETCTRL |= (0x1<<0)] peripheral [LPC_SYSCON->SYSAHBCLKCTRL |= (1<<11)] and configure PCLK
-     *   2. Set IOCON for correct pin functions (e.g., P0.8, P0.9, P0.18)
-     *   3. Set data format and size in CR0 (e.g., 8-bit SPI mode)
-     *   4. Configure clock prescaler in CPSR
-     * 
-     * Notes:
-     *   • Clock speed is derived from: SPI_Clock = PCLK / SPCCR
-     *
-     ******************************************************************************/
     SSPInit();
 
     // 4) Inicjalizacja modułu wyświetlacza i czujnika światła
@@ -367,7 +525,6 @@ int main(void) {
 
     // 5) Inicjalizacja EEPROM
     eeprom_init();
-    resetHighScore(2137);
 
     /* ---- Speaker ------> */
 
@@ -387,30 +544,14 @@ int main(void) {
     /* <---- Speaker ------ */
 
     // 6) Ustawienie kolorów (day/night mode)
-    adjustColors();
+    adjust_theme();
 
     // 7) Clear screen and show welcome screen with high score
-    playStartupAnimation();
-    startingScreenOled();
+    play_startup_animation();
+    show_welcome_screen();
 
     // 8) Set random generator seed to reading from light sensor
     srand(light_read());
 
-    playNote(notes[3],200);
-
-    // Pętla główna
-    while (1) {
-        // Na tym etapie nic więcej nie robimy.
-        // Główna logika gry pojawi się w finalnej wersji.
-
-		if (adjustColors()) {
-			startingScreenOled();
-			if (fontColor == OLED_COLOR_WHITE) {
-				playNote(notes[0],200);
-			}else {
-				playNote(notes[4],200);
-			}
-		}
-		delay32Ms(0, 300);
-    }
+    show_main_menu();
 }
