@@ -82,7 +82,7 @@
 \title{Dokumentacja - "Refleks"}
 \date{Systemy Wbudowane 2025}
 \author{Skład grupy (G02, czwartek 16:15):\\
-Najwyższy Architekt Porządku i Chaosu, \\Wielki Mistrz Gildii \textit{"Walecznych DevOps'ów"}, \\Strażnik Równowagi Systemów i Świętych Pipeline’ów, \\Dowódca Procesów CI/CD, \\Obrońca Infrastruktury Wiecznie Żywej, \\Prawowity Władca Kluczy Dostępowych, \\Pogromca Awarii Czających Się w Cieniu Logów: \\ {\huge \textbf{ Jakub Sikora 2137}} \\
+Jakub Sikora 2137 \\
 Adrian Jagieła 1337\\
 Patryk Krawczyk 251563}
 
@@ -194,11 +194,11 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
 \end{table}
 
 \chapter{Opis działania programu - instrukcja użytkownika}
-Gra toczy się przez pięć rund oraz rozpoczyna się od animowanej sekwencji startowej z motywami sci-fi ("Heat up...", "Thrust OK", "Fire laser") wraz z dźwiękami uruchamiania. Następnie wyświetlany jest ekran powitalny z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Użytkownik nawiguje przez główne menu za pomocą joysticka, wybierając spośród opcji: "Start game", "Reset score", "Credits" oraz "Exit".
+Gra toczy się przez pięć rund oraz rozpoczyna się od animowanej sekwencji startowej z motywami sci-fi ("Heat up...", "Thrust OK", "Fire laser", ...). Następnie wyświetlany jest ekran powitalny z bieżącym rekordowym wynikiem uzyskanym w grze w trakcie uprzednich rozgrywek. Użytkownik nawiguje przez główne menu za pomocą joysticka, wybierając spośród opcji: "Start game", "Reset score", "High score", "Credits" lub "Exit".
 
-Aktualny postęp gry można obserwować na pasku diod LED, gdzie każda dioda reprezentuje ukończoną rundę. W każdej rundzie użytkownik widzi na ekranie obrys koła z komunikatem "Wait..." wraz z dźwiękiem ostrzegawczym. Po pseudolosowym odstępie czasu (0,5-3,5 sekundy) koło zostaje wypełnione, sygnalizując rozpoczęcie pomiaru czasu reakcji. Kiedy użytkownik naciśnie joystick, uzyskany wynik w milisekundach jest wyświetlany na ekranie wraz z informacją o ewentualnym nowym rekordzie ("NEW RECORD!") i charakterystycznym dźwiękiem zwycięstwa.
+Aktualny postęp gry można obserwować na pasku diod LED, gdzie każda dioda reprezentuje ukończoną rundę oraz na wyświetlaczu 7-segmentowym. W każdej rundzie użytkownik widzi na ekranie obrys koła z komunikatem "Wait..." wraz z dźwiękiem ostrzegawczym. Po pseudolosowym odstępie czasu (0,5-3,5 sekundy) koło zostaje wypełnione, sygnalizując rozpoczęcie pomiaru czasu reakcji. Kiedy użytkownik naciśnie joystick, uzyskany wynik w milisekundach jest wyświetlany na ekranie wraz z informacją o ewentualnym nowym rekordzie ("NEW RECORD!") i charakterystycznym dźwiękiem zwycięstwa.
 
-System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie oświetlenia otoczenia. Opcja zresetowania zapisanego w pamięci rekordowego wyniku jest dostępna poprzez przechylenie płytki o kąt 30 stopni w dowolnym kierunku - operacja zostaje potwierdzona komunikatem "Reset HS" na wyświetlaczu. Po zakończeniu wszystkich pięciu rund wyświetlane są statystyki: średni czas reakcji oraz najlepszy wynik z bieżącej sesji.
+System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie oświetlenia otoczenia. Opcja zresetowania zapisanego w pamięci rekordowego wyniku jest dostępna poprzez przechylenie płytki o kąt 30 stopni w dowolnym kierunku z poziomu ekranu głównego - operacja zostaje potwierdzona komunikatem "Reset HS" na wyświetlaczu. Uzyskanie czasu równego 0 ms również skutkuje zresetowaniem rekordu. Po zakończeniu wszystkich pięciu rund wyświetlane są statystyki: średni czas reakcji oraz najlepszy wynik z bieżącej sesji.
 
 \chapter{Opis działania programu - opis algorytmu}
 \begin{enumerate}
@@ -209,6 +209,7 @@ System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie
 \begin{enumerate}
 \item \textbf{Start game}: Rozpoczęcie 5-rundowej rozgrywki
 \item \textbf{Reset score}: Resetowanie rekordu do wartości domyślnej (9999 ms)
+\item \textbf{High score}: Wyświetlenie obecnego rekordu
 \item \textbf{Credits}: Wyświetlenie informacji o autorze z melodią.
 \item \textbf{Exit}: Zakończenie programu z sekwencją dźwięków pożegnalnych
 \end{enumerate}
@@ -219,7 +220,7 @@ System automatycznie dostosowuje motyw kolorystyczny (jasny/ciemny) na podstawie
 \item Wyświetlenie obrysu koła z komunikatem "Czekaj..." i odtworzenie dźwięku ostrzegawczego.
 \item Generacja pseudolosowego opóźnienia (500-3500 ms) na podstawie ziarna z czujnika światła.
 \item Wypełnienie koła jako sygnał wizualny i rozpoczęcie precyzyjnego pomiaru czasu reakcji za pomocą Timer32.
-\item Oczekiwanie na naciśnięcie joysticka z implementacją debouncingu i walidacją czasu reakcji (50-5000 ms).
+\item Oczekiwanie na naciśnięcie joysticka z i walidacją czasu reakcji.
 \item Wyświetlenie zmierzonego czasu reakcji z jednostką "ms".
 \item Porównanie z rekordem przechowywanym w EEPROM i aktualizacja w przypadku poprawy wyniku.
 \item Wyświetlenie komunikatu "NEW RECORD!" z dźwiękiem zwycięstwa dla nowych rekordów.
@@ -505,7 +506,14 @@ GPIOSetDir( PORT2, 3, 0 );
 \subsection{Odczyt stanu joysticka}
 
 Joystick korzysta z flag bitowych, które pozwalają na reprezentowanie wielu kierunków jednocześnie za pomocą operacji bitowych OR. Na przykład, jeśli zarówno kierunek góra, jak i prawo są naciśnięte, wartość łączna będzie \texttt{JOYSTICK\_UP | JOYSTICK\_RIGHT}, co daje \texttt{0x02 | 0x10 = 0x12}.
+Odczyt wartości flag bitowych odbywa się poprzez odczyt wartości na porcie GPIO:
+\begin{lstlisting}[language=C]
+    uint8_t status = 0;
+    if (!GPIOGetValue( PORT2, 0)) {
+        status |= JOYSTICK_CENTER;
+    }
 
+\end{lstlisting}
 \subsection*{Podsumowanie}
 
 Dzięki takiemu podejściu możliwe jest rozpoznanie wielu stanów joysticka oraz ich kombinacji, co pozwala na intuicyjną obsługę urządzenia w programie.
@@ -544,14 +552,14 @@ Wybór odpowiedniego trybu zależy od wymagań urządzenia peryferyjnego. Niezgo
 
 W programie inicjalizacja interfejsu SPI wygląda następująco:
 \begin{lstlisting}[language=C]
-LPC_SYSCON->PRESETCTRL |= (0x1<<0);         // Wlaczenie zasilania peryferii SPI
-LPC_SYSCON->SYSAHBCLKCTRL |= (1<<11);       // Taktowanie peryferii SPI
-LPC_SYSCON->SSPCLKDIV = 0x02;               // Ustawienie dzielnika zegara SPI
+LPC_SYSCON->PRESETCTRL |= (0x1<<0);    // Wlaczenie zasilania peryferii SPI
+LPC_SYSCON->SYSAHBCLKCTRL |= (1<<11);  // Taktowanie peryferii SPI
+LPC_SYSCON->SSPCLKDIV = 0x02;          // Ustawienie dzielnika zegara SPI
 
 LPC_IOCON->PIO0_8 &= ~0x07;
-LPC_IOCON->PIO0_8 |= 0x01;                  // SSP MISO
+LPC_IOCON->PIO0_8 |= 0x01;  // SSP MISO
 LPC_IOCON->PIO0_9 &= ~0x07;
-LPC_IOCON->PIO0_9 |= 0x01;                  // SSP MOSI
+LPC_IOCON->PIO0_9 |= 0x01;  // SSP MOSI
 \end{lstlisting}
 Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik zegara dla peryferium SPI. Kolejne linie konfigurowane są piny mikrokontrolera do funkcji MISO i MOSI.
 
@@ -603,18 +611,19 @@ Wyświetlacz OLED użyty w projekcie ma rozdzielczość 96 x 64 piksele i pracuj
 
 \subsection{Budowa i podłączenie wyświetlacza}
 
-Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z palety barw RGB i jest wyposażony w kontroler SSD1331. Moduł komunikuje się poprzez interfejs SPI, a napięcie zasilania wynosi od 3,3 do 5 V. Dzięki kompaktowym wymiarom (ok. 27 x 31 mm) oraz wlutowanym goldpinom, integracja z projektem jest bardzo prosta[2][6].\\
-
-\textbf{Wyprowadzenia modułu:}
-\begin{itemize}
-    \item GND – masa układu
-    \item VDD – napięcie zasilania (3,3–5 V)
-    \item SCK – linia zegarowa SPI
-    \item SDA – linia danych SPI (MOSI)
-    \item RES – reset
-    \item DC – dane/komenda
-    \item CS – wybór układu (chip select)
-\end{itemize}
+Wyświetlacz OLED o przekątnej 0,95" i rozdzielczości 96x64 piksele korzysta z palety barw RGB i jest wyposażony w kontroler SSD1331. Moduł komunikuje się poprzez interfejs SPI, a napięcie zasilania wynosi od 3,3 do 5 V. Biblioteka zapewnia funkcję oled\_putChar, która zamienia podany znak na odpowiednie piksele, które są później wyświetlane na ekranie. Dzieje się to przy pomocy tablicy font5x7, która zawiera każdy znak char zapisany w poniższy sposób:
+\begin{lstlisting}[language=C]
+    {
+    _XXX____,
+    X___X___,
+    X_______,
+    _XXX____,
+    ____X___,
+    X___X___,
+    _XXX____,
+    ________
+    }
+\end{lstlisting}
 
 \subsection{Główne komponenty wyświetlacza OLED}
 
@@ -663,6 +672,92 @@ Po inicjalizacji parametrów, włączenie wyświetlacza:
 \begin{lstlisting}[language=C]
 GPIOSetValue(PORT1, 10, 1 );
 \end{lstlisting}
+
+\subsection{Wyświetlanie piksela}
+\begin{lstlisting}[language=C]
+    /* page address */
+         if(y < 8)  page = 0xB0;
+    else if(y < 16) page = 0xB1;
+    else if(y < 24) page = 0xB2;
+    else if(y < 32) page = 0xB3;
+    else if(y < 40) page = 0xB4;
+    else if(y < 48) page = 0xB5;
+    else if(y < 56) page = 0xB6;
+    else            page = 0xB7;
+    add = x + X_OFFSET;
+    lAddr = 0x0F & add;             // Low address
+    hAddr = 0x10 | (add >> 4);      // High address
+    add = y>>3;                     // Divide by 8
+    add <<= 3;                      // Multiply by 8
+    add = y - add;                  // Calculate bit position
+    mask = 1 << add;                // Left shift 1 by bit position
+    setAddress(page, lAddr, hAddr); // Set the address (sets the page,
+                                    // lower and higher column address pointers)
+    shadowPos = (page-0xB0)*OLED_DISPLAY_WIDTH+x;
+    if(color > 0)
+        shadowFB[shadowPos] |= mask;
+    else
+        shadowFB[shadowPos] &= ~mask;
+    writeData(shadowFB[shadowPos]);
+\end{lstlisting}
+
+
+\begin{enumerate}
+    \item \textbf{Wyznaczenie strony (page):} Wyświetlacze OLED używają tzw. adresowania stronicowego, które dzieli całą matrycę pikseli na strony (pages). Każda strona to zestaw 8 poziomych wierszy (pikseli) w pionie, ale obejmujący pełną szerokość wyświetlacza w poziomie (np. 64 kolumny). Na podstawie wartości $y$ dobierany jest odpowiedni adres strony $0xB0$ do $0xB7$.
+    \item \textbf{Adres kolumny:}
+      \begin{itemize}
+          \item \texttt{add = x + X\_OFFSET}
+          \item \texttt{lAddr = add \& 0x0F} – niższe 4 bity (adres kolumny niski)
+          \item \texttt{hAddr = 0x10 | (add >> 4)} – wyższe 4 bity (adres kolumny wysoki)
+      \end{itemize}
+    \item \textbf{Pozycja bitu w bajcie:}
+      \begin{itemize}
+          \item Obliczenie numeru bitu w bajcie strony: $bit = y \bmod 8$
+          \item Utworzenie maski bitowej: \texttt{mask = 1 << bit}
+      \end{itemize}
+    \item \textbf{Ustawienie adresu w kontrolerze OLED:}
+      \begin{itemize}
+          \item Wywołanie \texttt{setAddress(page, lAddr, hAddr)} ustawia wskaźnik pamięci OLED.
+      \end{itemize}
+    \item \textbf{Modyfikacja bufora cieni (\texttt{shadowFB}):}
+      \begin{itemize}
+          \item Obliczenie pozycji w buforze: 
+          \[
+          shadowPos = (page - 0xB0) \cdot OLED\_DISPLAY\_WIDTH + x
+          \]
+
+          gdzie 
+          \begin{itemize}
+            \item \texttt{0xB0}: adres pierwszej strony
+            \item \texttt{OLED\_DISPLAY\_WIDTH}: ilość pikseli w poziomie
+          \end{itemize}
+          \item Jeśli \texttt{color > 0}, ustawienie bitu: \texttt{shadowFB[shadowPos] |= mask}
+          \item Jeśli \texttt{color == 0}, wyczyszczenie bitu: \texttt{shadowFB[shadowPos] \&= \textasciitilde mask}
+      \end{itemize}
+    \item \textbf{Zapis do wyświetlacza:} Funkcja \texttt{writeData()} wysyła zmodyfikowany bajt do kontrolera OLED, modyfikując tym samym wartość znajdującą się pod ustawionym wcześniej adresem strony w jakiej znajduje się piksel.
+  \end{enumerate}
+  \vspace{10pt}
+
+  \begin{lstlisting}
+    #define OLED_DATA()   GPIOSetValue( PORT2, 7, 1 )
+    #define OLED_CMD()    GPIOSetValue( PORT2, 7, 0 )
+    #define OLED_CS_OFF() GPIOSetValue( PORT0, 2, 1 )
+    #define OLED_CS_ON()  GPIOSetValue( PORT0, 2, 0 )
+
+    static void writeData(uint8_t data)
+    {
+        OLED_DATA();
+        OLED_CS_ON();
+        SSPSend( (uint8_t *)&data, 1 );
+        OLED_CS_OFF();
+    }
+  \end{lstlisting}
+  Wysyłanie poleceń i danych do kontrolera wyświetlacza polega na ustawieniu portu GPIO w stan niski dla przesłania polecenia oraz w stan wysoki w celu przesłania danych, a następnie wysłanie 1 bajtu za pomocą interfejsu SPI.
+  \begin{itemize}
+    \item \texttt{OLED\_CS\_OFF()} - deaktywuje (wyłącza) sygnał CS (Chip Select) dla wyświetlacza OLED (urządzenie nieaktywne)
+    \item \texttt{OLED\_CS\_ON()} - aktywuje (włącza) sygnał CS (Chip Select) dla wyświetlacza OLED (urządzenie aktywne)
+    
+  \end{itemize}
 
 \subsection{Cechy i zalety wyświetlacza OLED w projekcie}
 
@@ -773,17 +868,17 @@ Linijka diod LED w projekcie jest realizowana za pomocą układu PCA9532, będą
 
 PCA9532 to specjalizowany ekspander I/O zoptymalizowany do sterowania diodami LED. Najważniejsze cechy:
 \begin{itemize}
-    \item 16 wyjść typu open-drain, mogących bezpośrednio sterować diodami LED (do 25 mA na wyjście, 200 mA na układ).
+    \item 16 wyjść typu open-drain, mogących bezpośrednio sterować diodami LED.
     \item Możliwość ustawienia każdego wyjścia w jednym z czterech trybów: wyłączony (OFF), włączony (ON), miganie z częstotliwością i współczynnikiem wypełnienia PWM0, miganie z PWM1.
     \item Dwa niezależnie programowalne generatory PWM (częstotliwość od 0,591 Hz do 152 Hz, 256 poziomów jasności).
-    \item Obsługa I2C do 400 kHz, zgodność z SMBus.
+    \item Obsługa I2C do 400 kHz.
     \item Możliwość pracy kilku układów na jednej magistrali (3 piny adresowe A0-A2).
     \item Po resecie wszystkie diody są wyłączone (stan wysoki na wyjściach).
 \end{itemize}
 
 \subsection{Podłączenie i adresacja}
 
-Wyjścia LED0–LED15 są bezpośrednio połączone z diodami LED przez rezystory ograniczające prąd. Linie SDA i SCL są podciągnięte do zasilania przez rezystory 10 k\si{\ohm}. Adres układu na magistrali I2C ustala się przez odpowiednie podłączenie pinów A0–A2 do masy lub zasilania (w projekcie: 0x60).
+Wyjścia LED0–LED15 są bezpośrednio połączone z diodami LED przez rezystory ograniczające prąd. Adres układu na magistrali I2C ustala się przez odpowiednie podłączenie pinów A0–A2 do masy lub zasilania (w projekcie: 0x60).
 
 \subsection{Sterowanie diodami w programie}
 

@@ -1,6 +1,6 @@
 /*****************************************************************************
  *   Project: Reflex
- *   Description: This program simulates a game to measure the user's 
+ *   Description: This program simulates a game to measure the user's
  *                reaction time based on a visual trigger.
  *
  *   Authors: Patryk Krawczyk
@@ -22,6 +22,7 @@
 #include "light.h"
 #include "oled.h"
 #include "rgb.h"
+#include "led7seg.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +38,7 @@
 #define INPUT 0
 
 /* Menu system constants */
-#define MENU_ITEM_COUNT 4
+#define MENU_ITEM_COUNT 5
 
 /*****************************************************************************
  * Enumeration: MenuItem
@@ -46,6 +47,7 @@
 typedef enum {
     MENU_START_GAME = 0,
     MENU_RESET_SCORE,
+	SHOW_HIGH_SCORE,
     MENU_CREDITS,
     MENU_EXIT
 } MenuItem;
@@ -54,6 +56,7 @@ typedef enum {
 static const char *menuItems[MENU_ITEM_COUNT] = {
     "Start game",
     "Reset score",
+	"High score",
     "Credits",
     "Exit"
 };
@@ -102,15 +105,44 @@ static oled_color_t fontColor;
 static oled_color_t backgroundColor;
 
 /*****************************************************************************
+** Function name:       set_led_bar_position
+**
+** Description:         Sets the LED bar to show a single LED at the specified
+**                      position. Used to indicate game progress/round number.
+**
+** Parameters:          pos - LED position (0-15, where 0 is rightmost)
+** Returned value:      None
+*****************************************************************************/
+static void set_led_bar_position(uint8_t pos)
+{
+    uint16_t ledOn;
+    ledOn = (uint16_t)0x01 << pos;  // Create bitmask for single LED
+    pca9532_setLeds(ledOn, 0xffff); // Turn on specified LED, turn off all others
+}
+
+/*****************************************************************************
+** Function name:       clear_led_bar
+**
+** Description:         Turn off led bars.
+**
+** Parameters:          None
+** Returned value:      None
+*****************************************************************************/
+void clear_led_bar(void)
+{
+    pca9532_setLeds(0, 0xffff); // Turn off all leds
+}
+
+/*****************************************************************************
 ** Function name:       draw_menu
 **
-** Description:         Renders the menu on OLED display with selection 
+** Description:         Renders the menu on OLED display with selection
 **                      highlight. Shows arrow indicator next to selected item.
 **
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void draw_menu(void) {
+void draw_menu(void) {
     oled_clearScreen(backgroundColor);
 
     for (int i = 0; i < MENU_ITEM_COUNT; i++) {
@@ -120,100 +152,68 @@ static void draw_menu(void) {
         char buffer[20];
         snprintf(buffer, sizeof(buffer), "%c %s", (i == selectedIndex ? '>' : ' '), menuItems[i]);
 
-        oled_putString(4, y, (const uint8_t *)buffer, fontColor, backgroundColor);
+        oled_putString(4, y, (uint8_t *)buffer, fontColor, backgroundColor);
     }
 }
+
 
 /*****************************************************************************
-** Function name:       handle_menu
+** Function name:       is_board_tilted
 **
-** Description:         Processes menu navigation using joystick input.
-**                      Handles up/down navigation and center button selection.
-**                      Also monitors for board tilt to reset high score.
-**
-** Parameters:          None
-** Returned value:      Selected menu item index (MenuItem enum value)
-*****************************************************************************/
-static int handle_menu(void) {
-    uint8_t previous_joy = 0xFF;  // Store previous joystick state for edge detection
-    
-    while (1) {
-        uint8_t joy = joystick_read();
-
-        // Navigate down (with edge detection to prevent rapid scrolling)
-        if ((joy & JOYSTICK_DOWN) && !(previous_joy & JOYSTICK_DOWN)) {
-            selectedIndex = (selectedIndex + 1) % MENU_ITEM_COUNT;
-            draw_menu();
-        } 
-        // Navigate up (with wraparound)
-        else if ((joy & JOYSTICK_UP) && !(previous_joy & JOYSTICK_UP)) {
-            selectedIndex = (selectedIndex - 1 + MENU_ITEM_COUNT) % MENU_ITEM_COUNT;
-            draw_menu();
-        } 
-        // Select current item
-        else if ((joy & JOYSTICK_CENTER) && !(previous_joy & JOYSTICK_CENTER)) {
-            return selectedIndex;
-        }
-
-        previous_joy = joy;
-
-        // Easter egg: Reset high score when board is tilted
-        if (is_board_tilted()) {
-            resetHighScore(9999);
-            oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
-            delay32Ms(0, 500);
-        }
-        
-        adjust_theme();  // Continuously monitor light sensor for theme changes
-        delay32Ms(0, 100);  // Debounce delay
-    }
-}
-
-/*****************************************************************************
-** Function name:       show_main_menu
-**
-** Description:         Main menu loop that displays menu and handles user
-**                      selections. Dispatches to appropriate functions based
-**                      on menu choice.
+** Description:         Determines if the board is significantly tilted from
+**                      its calibrated neutral position. Uses threshold of
+**                      ±30 units on X and Y axes.
 **
 ** Parameters:          None
-** Returned value:      None
+** Returned value:      true if board is tilted beyond threshold, false otherwise
 *****************************************************************************/
-static void show_main_menu(void) {
-    while(1) {
-        draw_menu();
-        MenuItem selection = handle_menu();
+ uint32_t is_board_tilted(void) {
+    acc_read(&tilt.x, &tilt.y, &tilt.z);
 
-        switch (selection) {
-            case MENU_START_GAME:
-                play_note(notes[0], 200);  // Play confirmation sound
-                start_game();
-                break;
+    // Apply calibration offsets
+    tilt.x += tilt.xOffset;
+    tilt.y += tilt.yOffset;
+    tilt.z += tilt.zOffset;
 
-            case MENU_RESET_SCORE:
-                resetHighScore(9999);
-                oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
-                play_note(notes[1], 200);
-                break;
-
-            case MENU_CREDITS:
-                oled_clearScreen(backgroundColor);
-                oled_putStringHorizontallyCentered(20, "by Patryk Krawczyk");
-                play_star_wars_theme();  // Play credits music
-                break;
-
-            case MENU_EXIT:
-                oled_clearScreen(backgroundColor);
-                oled_putStringHorizontallyCentered(20, "Exiting...");
-                // Play exit melody
-                play_note(notes[10], 200);
-                play_note(notes[5], 200);
-                play_note(notes[1], 200);
-                delay32Ms(0, 400);
-                return;  // Exit main menu loop
-        }
+    // Check if tilt exceeds threshold on either axis
+    if ((tilt.x > 30) || (tilt.x < -30) || (tilt.y > 30) || (tilt.y < -30)) {
+        return 1;
     }
+
+    return 0;
 }
+
+ /*****************************************************************************
+ ** Function name:       adjust_theme
+ **
+ ** Description:         Reads ambient light sensor and dynamically adjusts
+ **                      display theme between dark mode (low light) and light
+ **                      mode (bright light). Provides audio feedback on changes.
+ **
+ ** Parameters:          None
+ ** Returned value:      None
+ *****************************************************************************/
+ uint8_t adjust_theme(void) {
+     uint32_t reading = light_read();
+     uint32_t prev_fontColor = fontColor;
+
+     // Threshold-based theme switching
+     if (reading < 125) {
+         // Dark environment
+         fontColor = OLED_COLOR_WHITE;
+         backgroundColor = OLED_COLOR_BLACK;
+     } else {
+         // Bright environment
+         fontColor = OLED_COLOR_BLACK;
+         backgroundColor = OLED_COLOR_WHITE;
+     }
+
+     // Audio feedback when theme changes
+     if (fontColor == prev_fontColor) return 0;
+
+     play_note(notes[0], 200);
+     return 1;
+ }
 
 /*****************************************************************************
 ** Function name:       play_star_wars_theme
@@ -225,37 +225,32 @@ static void show_main_menu(void) {
 ** Returned value:      None
 *****************************************************************************/
 void play_star_wars_theme(void) {
-    // Main theme melody - first phrase
-    play_note(notes[9], 200);   // A#
-    play_note(notes[9], 200);   // A#
-    play_note(notes[4], 150);   // D#
-    play_note(notes[9], 200);   // A#
-    play_note(notes[11], 200);  // b
-    play_note(notes[9], 200);   // A#
-    play_note(notes[4], 150);   // D#
-    play_note(notes[11], 200);  // b
-    play_note(notes[9], 200);   // A#
-
-    delay32Ms(0, 200);  // Pause between phrases
-
+    // Main theme opening phrase
+    // "Dah dah dah dah-dah-dah daaah"
+    
+    // First three notes (G G G)
+    play_note(notes[8], 500);  // G
+    play_note(notes[8], 500);  // G
+    play_note(notes[8], 500);  // G
+    
+    // Lower octave phrase (C G F E D C G)
+    play_note(notes[2], 350);  // C
+    play_note(notes[16], 150); // g
+    play_note(notes[8], 500);  // G
+    play_note(notes[6], 350);  // F
+    play_note(notes[4], 150);  // E
+    play_note(notes[3], 150);  // D
+    play_note(notes[2], 350);  // C
+    play_note(notes[16], 150); // g
+    play_note(notes[8], 1000); // G
+    
     // Second phrase
-    play_note(notes[4], 150);   // D#
-    play_note(notes[4], 150);   // D#
-    play_note(notes[3], 200);   // D
-    play_note(notes[9], 200);   // A#
-    play_note(notes[4], 150);   // D#
-    play_note(notes[11], 200);  // b
-    play_note(notes[9], 250);   // A# (longer)
-
-    delay32Ms(0, 200);  // Pause
-
-    // Final phrase
-    play_note(notes[17], 150);  // g (high)
-    play_note(notes[17], 150);  // g (high)
-    play_note(notes[17], 150);  // g (high)
-    play_note(notes[4], 150);   // D#
-    play_note(notes[11], 200);  // b
-    play_note(notes[9], 300);   // A# (final note, longer)
+    play_note(notes[6], 350);  // F
+    play_note(notes[4], 150);  // E
+    play_note(notes[3], 150);  // D
+    play_note(notes[2], 350);  // C
+    play_note(notes[16], 150); // g
+    play_note(notes[8], 1000); // G
 }
 
 /*****************************************************************************
@@ -268,39 +263,12 @@ void play_star_wars_theme(void) {
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void init_tilt_calibration(void) {
+void init_tilt_calibration(void) {
     acc_read(&tilt.x, &tilt.y, &tilt.z);
-    
-    // Calculate offsets to neutralize current position
+
     tilt.xOffset = -tilt.x;
     tilt.yOffset = -tilt.y;
-    tilt.zOffset = 64 - tilt.z;  // Assume Z should be 64 when level
-}
-
-/*****************************************************************************
-** Function name:       is_board_tilted
-**
-** Description:         Determines if the board is significantly tilted from
-**                      its calibrated neutral position. Uses threshold of
-**                      ±30 units on X and Y axes.
-**
-** Parameters:          None
-** Returned value:      true if board is tilted beyond threshold, false otherwise
-*****************************************************************************/
-static bool is_board_tilted(void) {
-    acc_read(&tilt.x, &tilt.y, &tilt.z);
-
-    // Apply calibration offsets
-    tilt.x += tilt.xOffset;
-    tilt.y += tilt.yOffset;
-    tilt.z += tilt.zOffset;
-
-    // Check if tilt exceeds threshold on either axis
-    if ((tilt.x > 30) || (tilt.x < -30) || (tilt.y > 30) || (tilt.y < -30)) {
-        return true;
-    }
-
-    return false;
+    tilt.zOffset = 64 - tilt.z;
 }
 
 /*****************************************************************************
@@ -312,20 +280,19 @@ static bool is_board_tilted(void) {
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void wait_for_joystick_center_click(void) {
-    while ((joystick_read() & JOYSTICK_CENTER) == 0) {
-        delay32Ms(0, 100);  // Poll every 100ms to avoid busy waiting
-    }
+void wait_for_joystick_center_click(void) {
+	while ((joystick_read() & JOYSTICK_CENTER) == 0) {
+		delay32Ms(0, 1);
+	}
 }
 
 /*****************************************************************************
 ** Function name:       draw_circle
 **
-** Description:         Draws a circle outline on the OLED display using
-**                      Bresenham's circle algorithm for efficient rendering.
+** Description:         Draws a circle outline on the OLED display
 **
 ** Parameters:          x0 - center X coordinate
-**                      y0 - center Y coordinate  
+**                      y0 - center Y coordinate
 **                      radius - circle radius in pixels
 **                      color - pixel color to draw with
 ** Returned value:      None
@@ -335,21 +302,20 @@ void draw_circle(uint8_t x0, uint8_t y0, uint8_t radius, oled_color_t color) {
     int16_t y = 0;
     int16_t err = 0;
 
-    // Bresenham's circle algorithm - draw 8 symmetric points per iteration
     while (x >= y) {
-        oled_putPixel(x0 + x, y0 + y, color);  // Octant 1
-        oled_putPixel(x0 + y, y0 + x, color);  // Octant 2
-        oled_putPixel(x0 - y, y0 + x, color);  // Octant 3
-        oled_putPixel(x0 - x, y0 + y, color);  // Octant 4
-        oled_putPixel(x0 - x, y0 - y, color);  // Octant 5
-        oled_putPixel(x0 - y, y0 - x, color);  // Octant 6
-        oled_putPixel(x0 + y, y0 - x, color);  // Octant 7
-        oled_putPixel(x0 + x, y0 - y, color);  // Octant 8
+        oled_putPixel(x0 + x, y0 + y, color);
+        oled_putPixel(x0 + y, y0 + x, color);
+        oled_putPixel(x0 - y, y0 + x, color);
+        oled_putPixel(x0 - x, y0 + y, color);
+        oled_putPixel(x0 - x, y0 - y, color);
+        oled_putPixel(x0 - y, y0 - x, color);
+        oled_putPixel(x0 + y, y0 - x, color);
+        oled_putPixel(x0 + x, y0 - y, color);
 
         y += 1;
         if (err <= 0) {
             err += 2 * y + 1;
-        } 
+        }
         if (err > 0) {
             x -= 1;
             err -= 2 * x + 1;
@@ -392,15 +358,14 @@ void fill_circle(uint8_t x0, uint8_t y0, uint8_t radius, oled_color_t color) {
 **                      durationMs - duration to play the note in milliseconds
 ** Returned value:      None
 *****************************************************************************/
-static void play_note(uint32_t note, uint32_t durationMs) {
-    uint32_t t = 0;
-    
+void play_note(uint32_t note, uint32_t durationMs) {
     if (note > (uint32_t)0) {
+        uint32_t t = 0;
         // Generate square wave for specified duration
         while (t < (durationMs * (uint32_t)1000)) {
             P1_2_HIGH();                        // Set speaker pin high
             delay32Us(0, note / (uint32_t)4);   // Half period delay
-            P1_2_LOW();                         // Set speaker pin low  
+            P1_2_LOW();                         // Set speaker pin low
             delay32Us(0, note / (uint32_t)4);   // Half period delay
             t += note;                          // Track elapsed time
         }
@@ -408,53 +373,6 @@ static void play_note(uint32_t note, uint32_t durationMs) {
     else {
         delay32Ms(0, durationMs);
     }
-}
-
-/*****************************************************************************
-** Function name:       adjust_theme
-**
-** Description:         Reads ambient light sensor and dynamically adjusts
-**                      display theme between dark mode (low light) and light
-**                      mode (bright light). Provides audio feedback on changes.
-**
-** Parameters:          None
-** Returned value:      None
-*****************************************************************************/
-static void adjust_theme(void) {
-    uint32_t reading = light_read();
-    uint32_t prev_fontColor = fontColor;
-    
-    // Threshold-based theme switching
-    if (reading < 125) {
-        // Dark environment
-        fontColor = OLED_COLOR_WHITE;
-        backgroundColor = OLED_COLOR_BLACK;
-    } else {
-        // Bright environment
-        fontColor = OLED_COLOR_BLACK;
-        backgroundColor = OLED_COLOR_WHITE;
-    }
-    
-    // Audio feedback when theme changes
-    if (fontColor != prev_fontColor) {
-        play_note(notes[0], 200);  // Theme changed sound
-    }
-}
-
-/*****************************************************************************
-** Function name:       set_led_bar_position
-**
-** Description:         Sets the LED bar to show a single LED at the specified
-**                      position. Used to indicate game progress/round number.
-**
-** Parameters:          pos - LED position (0-15, where 0 is rightmost)
-** Returned value:      None
-*****************************************************************************/
-static void set_led_bar_position(uint8_t pos)
-{
-    uint16_t ledOn;
-    ledOn = (uint16_t)0x01 << pos;  // Create bitmask for single LED
-    pca9532_setLeds(ledOn, 0xffff); // Turn on specified LED, turn off all others
 }
 
 /*****************************************************************************
@@ -471,7 +389,7 @@ void set_high_score(uint16_t value) {
     // Split 16-bit value into two bytes (big-endian format)
     buf[0] = (value & (uint16_t)0xFF00) >> 8;  // High byte
     buf[1] = (value & (uint16_t)0x00FF);       // Low byte
-    eeprom_write(buf, 0, 2);                   // Write to EEPROM address 0
+    eeprom_write(buf, 8, 2);                   // Write to EEPROM address 0
 }
 
 /*****************************************************************************
@@ -483,9 +401,9 @@ void set_high_score(uint16_t value) {
 ** Parameters:          None
 ** Returned value:      High score value in milliseconds
 *****************************************************************************/
-uint16_t read_high_score() {
+static uint16_t read_high_score(void) {
     uint8_t readBuf[2];
-    eeprom_read(readBuf, 0, 2);  // Read 2 bytes from EEPROM address 0
+    eeprom_read(readBuf, 8, 2);  // Read 2 bytes from EEPROM address 8
     // Reconstruct 16-bit value from bytes (big-endian format)
     return ((uint16_t)readBuf[0] << 8) | (uint16_t)readBuf[1];
 }
@@ -500,21 +418,21 @@ uint16_t read_high_score() {
 ** Parameters:          None
 ** Returned value:      Reaction time in milliseconds (incomplete implementation)
 *****************************************************************************/
-static uint32_t measure_reaction_time(void) {
+uint32_t measure_reaction_time(void) {
     // Configure Timer32_1 for millisecond counting
     init_timer32(1, 72000);
     LPC_TMR32B1->TCR = 0x02;  // Reset timer
-    
+
     // Calculate prescaler for 1ms resolution
     uint32_t prescalerValue = ((SystemFrequency/LPC_SYSCON->SYSAHBCLKDIV) / 1000) - 1;
     LPC_TMR32B1->PR = prescalerValue;
     LPC_TMR32B1->MCR = 0x00;  // No match control
     LPC_TMR32B1->TCR = 0x01;  // Start timer
 
-    wait_for_joystick_center_click();  // Wait for user response
+    wait_for_joystick_center_click();
 
     uint32_t reactionTimeMs = LPC_TMR32B1->TC;  // Read timer value
-    return reactionTimeMs;  // Note: This should return reactionTimeMs, not string length
+    return reactionTimeMs;
 }
 
 /*****************************************************************************
@@ -528,11 +446,11 @@ static uint32_t measure_reaction_time(void) {
 **                      text - null-terminated string to display
 ** Returned value:      None
 *****************************************************************************/
-static void oled_putStringHorizontallyCentered(uint8_t y, const char text[]) {
+void oled_putStringHorizontallyCentered(uint8_t y, const char text[]) {
     int textLength = strlen(text);
     // Calculate horizontal center position (assuming 5 pixels per character)
     uint8_t x = (OLED_DISPLAY_WIDTH - (textLength * 5)) / 2;
-    oled_putString(x, y, (const uint8_t *)text, fontColor, backgroundColor);
+    oled_putString(x, y, (uint8_t *)text, fontColor, backgroundColor);
 }
 
 /*****************************************************************************
@@ -545,22 +463,18 @@ static void oled_putStringHorizontallyCentered(uint8_t y, const char text[]) {
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void show_welcome_screen(void) {
+void show_welcome_screen(void) {
     oled_clearScreen(backgroundColor);
-    oled_putStringHorizontallyCentered(2, "Witaj w grze");   // "Welcome to game"
-    oled_putStringHorizontallyCentered(12, "REFLEKS");       // "REFLEX"
+    oled_putStringHorizontallyCentered(2, "Welcome");
+    oled_putStringHorizontallyCentered(12, "REFLEKS");
     oled_putStringHorizontallyCentered(32, "High score:");
 
-    // Retrieve current high score from EEPROM
-    uint8_t readBuf[2];
-    eeprom_read(readBuf, 0, 2);
-    uint16_t highScoreMs = ((uint16_t)readBuf[0] << 8) | (uint16_t)readBuf[1];
+    uint16_t highScoreMs = read_high_score();
 
-    // Display high score with units
     char highScoreMsString[8];
     sprintf(highScoreMsString, "%u ms", highScoreMs);
     oled_putStringHorizontallyCentered(42, highScoreMsString);
-    
+
     wait_for_joystick_center_click();  // Wait for user to continue
 }
 
@@ -574,15 +488,15 @@ static void show_welcome_screen(void) {
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void play_startup_animation(void) {
-    play_note(notes[3], 200);  // Startup sound
-    
-    const char *frames[] = {".", "..", "..."};  // Animation frames
+void play_startup_animation(void) {
+    play_note(notes[3], 200);
+
+    const char *frames[] = {".", "..", "..."};
     const char *quotes[] = {
-        "Heat up...", "Thrust OK", "Fire laser", "Weapons armed", 
-        "AI synced", "Engines online", "Core stable", "Warp ready", "Scanning..."
+        "Heat up...", "Thrust OK", "Fire laser", "Weapons armed",
+        "AI synced", "Engines online", "Core stable", "Warp ready", "Scanning"
     };
-    
+
     // Display 3 different startup messages with animated dots
     for (int i = 0; i < 9; i++) {
         const char *str = quotes[i];
@@ -590,12 +504,13 @@ static void play_startup_animation(void) {
             oled_clearScreen(backgroundColor);
             oled_putStringHorizontallyCentered(24, str);
             oled_putStringHorizontallyCentered(36, frames[f]);
-            delay32Ms(0, 150);  // Animation frame delay
+            delay32Ms(0, 300);
         }
     }
-    
+
     init_tilt_calibration();  // Calibrate accelerometer during startup
 }
+
 
 /*****************************************************************************
 ** Function name:       start_game
@@ -608,62 +523,172 @@ static void play_startup_animation(void) {
 ** Parameters:          None
 ** Returned value:      None
 *****************************************************************************/
-static void start_game(void) {
+void start_game(void) {
     uint8_t round = 0;
     uint32_t totalTime = 0;
-    
+    uint16_t highScoreMs = read_high_score();
+
     while (round < 5) {
         set_led_bar_position(round);  // Show progress on LED bar
-        adjust_theme();               // Update display theme
-        
+        led7seg_setChar('0' + round, FALSE);
+        adjust_theme();
+
         // Display waiting screen with circle outline
         oled_clearScreen(backgroundColor);
-        draw_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
-        oled_putStringCentered("WAIT..."); 
+        draw_circle(OLED_DISPLAY_WIDTH / 2, OLED_DISPLAY_HEIGHT / 2, 28, fontColor);
+        oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2 - 4, "WAIT...");
         play_note(notes[2], 250);
-        
+
         // Random delay before stimulus (0.5-3.5 seconds)
         uint32_t randomDelay = (rand() % 3000) + 500;
-        delay32Ms(1, randomDelay);
-        
-        fill_circle(OLED_DISPLAY_HEIGHT / 2, OLED_DISPLAY_WIDTH / 2, 24, fontColor);
-        
-        // Measure reaction time 
+        delay32Ms(0, randomDelay);
+
+        fill_circle(OLED_DISPLAY_WIDTH / 2, OLED_DISPLAY_HEIGHT / 2, 28, fontColor);
+
+        // Measure reaction time
         uint32_t reactionTimeMs = measure_reaction_time();
         totalTime += reactionTimeMs;
-        
+
         // Display results
         char reactionTimeMsString[5];
         sprintf(reactionTimeMsString, "%u", reactionTimeMs);
         oled_clearScreen(backgroundColor);
-        char *str = strcat(reactionTimeMsString, " ms"); 
+        strcat(reactionTimeMsString, " ms");
+        oled_clearScreen(backgroundColor);
         oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2, reactionTimeMsString);
-        
+
         // Update high score if new record achieved
-        uint16_t highScoreMs = read_high_score(); 
         if ((reactionTimeMs < highScoreMs) || (highScoreMs == (uint16_t)0)) {
-            set_high_score(reactionTimeMs);
             oled_putStringHorizontallyCentered(OLED_DISPLAY_HEIGHT / 2 + 12, "NEW RECORD!");
+            set_high_score(reactionTimeMs);
+            highScoreMs = reactionTimeMs;
             play_note(notes[0], 100);
             play_note(notes[5], 200);
-            play_note(notes[10], 500);
+            play_note(notes[10], 400);
         }
-        
-        round++;
-        wait_for_joystick_center_click();  // Wait for user to continue
-    }
 
+        round++;
+        delay32Ms(0, 600);
+        wait_for_joystick_center_click();
+    }
+    oled_clearScreen(backgroundColor);
     oled_putStringHorizontallyCentered(10, "Game Complete!");
-    
+
     char avgTimeStr[16];
-    snprintf(avgTimeStr, sizeof(avgTimeStr), "Avg: %lu ms", totalTime / 5);
+    snprintf(avgTimeStr, sizeof(avgTimeStr), "Avg: %u ms", totalTime / 5);
     oled_putStringHorizontallyCentered(25, avgTimeStr);
-    
+
     char bestTimeStr[16];
     snprintf(bestTimeStr, sizeof(bestTimeStr), "Best: %u ms", read_high_score());
     oled_putStringHorizontallyCentered(40, bestTimeStr);
-    
+    clear_led_bar();
+    led7seg_setChar('0', FALSE);
+    delay32Ms(0, 1000);
     wait_for_joystick_center_click();
+}
+
+/*****************************************************************************
+** Function name:       handle_menu
+**
+** Description:         Processes menu navigation using joystick input.
+**                      Handles up/down navigation and center button selection.
+**                      Also monitors for board tilt to reset high score.
+**
+** Parameters:          None
+** Returned value:      Selected menu item index (MenuItem enum value)
+*****************************************************************************/
+int handle_menu(void) {
+    uint8_t previous_joy = 0xFF;  // Store previous joystick state for edge detection
+
+    while (1) {
+        uint8_t joy = joystick_read();
+
+        // Navigate down (with edge detection to prevent rapid scrolling)
+        if ((joy & JOYSTICK_DOWN) && !(previous_joy & JOYSTICK_DOWN)) {
+            selectedIndex = (selectedIndex + 1) % MENU_ITEM_COUNT;
+            draw_menu();
+        }
+        // Navigate up (with wraparound)
+        else if ((joy & JOYSTICK_UP) && !(previous_joy & JOYSTICK_UP)) {
+            selectedIndex = (selectedIndex - 1 + MENU_ITEM_COUNT) % MENU_ITEM_COUNT;
+            draw_menu();
+        }
+        // Select current item
+        else if ((joy & JOYSTICK_CENTER) && !(previous_joy & JOYSTICK_CENTER)) {
+            return selectedIndex;
+        }
+
+        previous_joy = joy;
+
+        // Easter egg: Reset high score when board is tilted
+        if (is_board_tilted()) {
+            set_high_score(9999);
+            oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
+            delay32Ms(0, 500);
+        }
+
+        if (adjust_theme()) {
+        	draw_menu();
+        }
+        delay32Ms(0, 50);
+    }
+}
+
+/*****************************************************************************
+** Function name:       show_main_menu
+**
+** Description:         Main menu loop that displays menu and handles user
+**                      selections. Dispatches to appropriate functions based
+**                      on menu choice.
+**
+** Parameters:          None
+** Returned value:      None
+*****************************************************************************/
+void show_main_menu(void) {
+    while(1) {
+        draw_menu();
+        MenuItem selection = handle_menu();
+        oled_clearScreen(backgroundColor);
+        play_note(notes[0], 200);
+
+        switch (selection) {
+            case MENU_START_GAME:
+                start_game();
+                break;
+
+            case MENU_RESET_SCORE:
+                set_high_score(9999);
+                oled_putStringHorizontallyCentered((OLED_DISPLAY_HEIGHT / 2) + 16, "Reset HS");
+                delay32Ms(0, 800);
+                break;
+
+			case SHOW_HIGH_SCORE:
+				oled_putStringHorizontallyCentered(32, "High score:");
+				uint16_t highScoreMs = read_high_score();
+				char highScoreMsString[8];
+				sprintf(highScoreMsString, "%u ms", highScoreMs);
+				oled_putStringHorizontallyCentered(42, highScoreMsString);
+				delay32Ms(0, 1000);
+				wait_for_joystick_center_click();
+				break;
+
+            case MENU_CREDITS:
+                oled_putStringHorizontallyCentered(20, "by");
+                oled_putStringHorizontallyCentered(32, "Patryk");
+                oled_putStringHorizontallyCentered(44, "Krawczyk");
+                play_star_wars_theme();
+                break;
+
+            case MENU_EXIT:
+                oled_putStringHorizontallyCentered(20, "Exiting...");
+                play_note(notes[10], 200);
+                play_note(notes[5], 200);
+                play_note(notes[1], 200);
+                delay32Ms(0, 400);
+                oled_clearScreen(backgroundColor);
+                return;
+        }
+    }
 }
 
 /*****************************************************************************
@@ -683,7 +708,6 @@ int main(void) {
 
     // Initialize 32-bit timers for timing functions
     init_timer32(0, 10);  // Timer 0
-    init_timer32(1, 10);  // Timer 1
 
     // Initialize I2C bus as master for sensor communication
     I2CInit((uint32_t)I2CMASTER, 0);
@@ -693,16 +717,22 @@ int main(void) {
 
     // Initialize OLED display module
     oled_init();
-
+    
     // Initialize and enable ambient light sensor (ISL29003)
     light_init();
     light_enable();
+    led7seg_init();
 
-    // Initialize EEPROM for persistent storage
+    // Seed random number generator with light sensor reading
+	srand(light_read());
+    pca9532_init();
+    clear_led_bar();
     eeprom_init();
+    acc_init();
+    joystick_init();
 
     /* ---- Speaker Hardware Setup ---- */
-    
+
     // Configure PWM pin for speaker output with low-pass filter
     GPIOSetDir(PORT1, 2, OUTPUT);
     // Set pin to PWM mode via IOCON register
@@ -710,7 +740,7 @@ int main(void) {
 
     // Initialize LM4811 analog audio amplifier control pins
     GPIOSetDir(PORT3, 0, OUTPUT);  // Clock pin
-    GPIOSetDir(PORT3, 1, OUTPUT);  // Up/Down pin  
+    GPIOSetDir(PORT3, 1, OUTPUT);  // Up/Down pin
     GPIOSetDir(PORT3, 2, OUTPUT);  // Shutdown pin
 
     // Configure amplifier initial state (disabled)
@@ -725,12 +755,9 @@ int main(void) {
 
     // Show startup animation and calibrate sensors
     play_startup_animation();
-    
+
     // Display welcome screen with high score
     show_welcome_screen();
-
-    // Seed random number generator with light sensor reading
-    srand(light_read());
 
     // Enter main menu loop
     show_main_menu();
