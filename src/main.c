@@ -3,7 +3,7 @@
  *   Description: This program simulates a game to measure the user's
  *                reaction time based on a visual trigger.
  *
- *   Authors: Patryk Krawczyk
+ *   Authors: Patryk Krawczyk, Adrian Jagieła, Jakub Sikora
  *
  ******************************************************************************/
 

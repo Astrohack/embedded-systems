@@ -82,8 +82,8 @@
 \title{Dokumentacja - "Refleks"}
 \date{Systemy Wbudowane 2025}
 \author{Skład grupy (G02, czwartek 16:15):\\
-Jakub Sikora 2137 \\
-Adrian Jagieła 1337\\
+Jakub Sikora 251626 \\
+Adrian Jagieła 251531 \\
 Patryk Krawczyk 251563}
 
 \begin{document}
@@ -121,21 +121,6 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         \item NVIC (Nested Vectored Interrupt Controller).
         \item Brownout detect z czterema progami oraz Power-On Reset.
     \end{itemize}
-\end{itemize}
-
-\section{Wyposażenie płytki rozwojowej}
-
-\begin{itemize}
-    \item \textbf{Zasilanie:} Układ zasilania z diodą sygnalizującą (Power-on LED); możliwość zasilania przez USB lub zewnętrzne źródło (5--9 V).
-    \item \textbf{USB:} Złącze USB typu B do komunikacji i zasilania; dioda sygnalizująca podłączenie USB.
-    \item \textbf{Debugowanie:} Interfejs SWD (Serial Wire Debug) do programowania i debugowania.
-    \item \textbf{Przyciski:} Dwa przyciski użytkownika (BUT1, BUT2) oraz przycisk RESET.
-    \item \textbf{LEDy:} Osiem diod LED użytkownika (LED0--LED7) podłączonych do wybranych portów GPIO.
-    \item \textbf{Obszar prototypowy:} Pole lutownicze do własnych rozszerzeń.
-    \item \textbf{UEXT:} Uniwersalne złącze rozszerzeń do podłączania dodatkowych modułów (np. czujników, wyświetlaczy).
-    \item \textbf{Wyprowadzenia:} Wszystkie porty mikrokontrolera wyprowadzone na złącza goldpin.
-    \item \textbf{Wymiary płytki:} Typowo 80 x 50 mm (LPC-P1343), 38 x 38 mm (LPC-H1343).
-    \item \textbf{Płytka:} FR-4, grubość 1,5 mm, czerwony lub zielony soldermask, biały nadruk elementów.
 \end{itemize}
 
 \section{Schemat blokowy i układ zasilania}
@@ -180,15 +165,15 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         Funkcjonalność      & Autor        \\
         \hline
         Timer               & Patryk Krawczyk \\
-        Dźwięk              & Patryk Krawczyk \\
-        Joystick (GPIO)     & Unassigned \\
-        Wyświetlacz OLED    & Unassigned \\
-        Interfejs SPI       & Unassigned \\
-        Linijka diod        & Unassigned \\
-        Interfejs I2C       & Unassigned \\
+        Dźwięk              & Jakub Sikora \\
+        Joystick (GPIO)     & Jakub Sikora \\
+        Wyświetlacz OLED    & Adrian Jagieła \\
+        Interfejs SPI       & Jakub Sikora \\
+        Linijka diod        & Adrian Jagieła \\
+        Interfejs I2C       & Jakub Sikora \\
         Moduł EEPROM        & Patryk Krawczyk \\
         Akcelerometr        & Patryk Krawczyk \\
-        Czujnik oświetlenia & Patryk Krawczyk \\
+        Czujnik oświetlenia & Adrian Jagieła \\
         \hline
     \end{tabular}
 \end{table}
