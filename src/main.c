@@ -674,8 +674,8 @@ void show_main_menu(void) {
 
             case MENU_CREDITS:
                 oled_putStringHorizontallyCentered(20, "by");
-                oled_putStringHorizontallyCentered(32, "Patryk");
-                oled_putStringHorizontallyCentered(44, "Krawczyk");
+                oled_putStringHorizontallyCentered(32, "group");
+                oled_putStringHorizontallyCentered(44, "G02 :D");
                 play_star_wars_theme();
                 break;
 
