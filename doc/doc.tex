@@ -1,4 +1,4 @@
-\documentclass[a4paper,12pt]{report}
+\documentclass[letterpaper,11pt]{report}
 \usepackage[utf8]{inputenc}
 \usepackage[polish]{babel}
 \usepackage[T1]{fontenc}
@@ -16,18 +16,28 @@
 \usepackage{inconsolata} 
 \usepackage{tabularx}
 \usepackage{makecell}
-\usepackage{titlesec}%
+\usepackage{titlesec}
 \usepackage{siunitx}
 \usepackage{amsmath}         % tryb \text{} w matematyce
 \usepackage{textcomp}        % np. \textendash
 \usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{calc}
 
+\geometry{
+  top=2.5cm,
+  bottom=2.5cm,
+  left=0.8in,
+  right=0.8in
+}
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 \definecolor{codegreen}{rgb}{0,0.6,0}
+
+\definecolor{greenRules}{RGB}{0,115,103}
 
 % Define a custom style
 
@@ -71,7 +81,6 @@
   {\thesubsection.}
   {0.5em}
   {}
-\geometry{margin=2.5cm}
 
 \lstset{
   inputencoding=utf8,       % Ustawienie kodowania wejściowego na UTF-8
@@ -81,12 +90,32 @@
 
 \title{Dokumentacja - "Refleks"}
 \date{Systemy Wbudowane 2025}
-\author{Skład grupy (G02, czwartek 16:15):\\
-Jakub Sikora 251626 \\
+\author{Skład grupy (G02, czwartek 16:15):\\\\
+\textbf{Jakub Sikora 251626} \\
 Adrian Jagieła 251531 \\
 Patryk Krawczyk 251563}
 
 \begin{document}
+
+\pagestyle{fancy}
+\fancyhead{} 
+\newcommand{\fancystyle}{
+    \fancyhf{}
+    \fancyhead[R]{Dokumentacja projektu Reflex}
+    \fancyhead[L]{\small\raggedright\nouppercase{\rightmark}}
+    \renewcommand{\headruleskip}{0pt}
+    \renewcommand{\headrulewidth}{2pt}
+    \renewcommand{\headrule}{\hbox to\headwidth{\color{greenRules}\leaders\hrule height \headrulewidth\hfill}}
+
+    \fancyfoot{} % clear all footer fields
+    \fancyfoot[LE,RO]{\thepage}
+    \renewcommand{\footruleskip}{4pt}
+    \renewcommand{\footrulewidth}{2pt}
+    \renewcommand{\footrule}{\hbox to\headwidth{\color{greenRules}\leaders\hrule height \headrulewidth\hfill}}
+}
+\fancystyle
+\fancypagestyle{plain}{\fancystyle}
+
 \maketitle
 
 \tableofcontents
@@ -95,7 +124,7 @@ Patryk Krawczyk 251563}
 
 \section{Charakterystyka ogólna}
 
-Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to uniwersalne narzędzie przeznaczone do szybkiego prototypowania i testowania aplikacji wbudowanych. Mikrokontroler LPC1343 firmy NXP, oparty na 32-bitowym rdzeniu ARM Cortex-M3, zapewnia wysoką wydajność, niski pobór mocy oraz szeroki zestaw peryferiów, co czyni go idealnym wyborem dla projektów wymagających integracji wielu funkcji na jednej płytce.
+Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to uniwersalne narzędzie przeznaczone do szybkiego prototypowania i testowania aplikacji wbudowanych. Mikrokontroler LPC1343 firmy NXP, oparty na 32-bitowym rdzeniu ARM Cortex-M3, zapewnia wysoką wydajność, niski pobór mocy oraz szeroki zestaw peryferiów, co czyni go idealnym wyborem dla projektów wymagających integracji wielu funkcji na jednej płytce.Posiada zegar kwarcowy 12 MHz podłączony do pinów XTALIN/XTALOUT.
 
 \section{Główne cechy mikrokontrolera LPC1343}
 
@@ -123,15 +152,6 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
     \end{itemize}
 \end{itemize}
 
-\section{Schemat blokowy i układ zasilania}
-
-\begin{itemize}
-    \item \textbf{Zegar:} Kwarc 12 MHz podłączony do pinów XTALIN/XTALOUT.
-    \item \textbf{Zworki:} Umożliwiają wybór źródła zasilania (3,3 V dla rdzenia i I/O), podłączenie linii SWO do debuggera, połączenie masy z wybranymi pinami.
-    \item \textbf{Reset:} Układ resetu z rezystorem 10 k\si{\ohm} i przyciskiem.
-    \item \textbf{Pobór prądu:} Typowo ok. 20 mA.
-\end{itemize}
-
 \section{Bezpieczeństwo i użytkowanie}
 
 \begin{itemize}
@@ -140,7 +160,6 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
     \item Zalecane środowiska programistyczne to IAR for ARM, Rowley CrossWorks lub dedykowane IDE Eclipse-based (np. LPCXpresso).
     \item Przed podłączeniem płytki do komputera przez USB należy upewnić się, że nie występują zwarcia na liniach zasilania.
 \end{itemize}
-\clearpage
 
 \chapter{Podział pracy w zespole wraz z listą wykorzystanych funkcjonalności}
 \begin{table}[h]
@@ -558,7 +577,7 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
     \item \textbf{Daisy-chain:} slave'y połączone szeregowo, dane przesyłane przez kolejne urządzenia, jeden wspólny sygnał SS.
 \end{itemize}
 
-\subsection*{Zalety i ograniczenia SPI}
+\subsection{Zalety i ograniczenia SPI}
 
 \textbf{Zalety:}
 \begin{itemize}
@@ -566,7 +585,6 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
     \item Prosta implementacja sprzętowa i programowa.
     \item Pełny dupleks – jednoczesna transmisja i odbiór danych.
 \end{itemize}
-
 \textbf{Ograniczenia:}
 \begin{itemize}
     \item Brak standaryzacji protokołu warstwy wyższej (każde urządzenie może mieć własny sposób interpretacji danych).
@@ -574,11 +592,12 @@ Pierwsze trzy linie włączają zasilanie i taktowanie oraz ustawiają dzielnik 
     \item Brak możliwości adresowania urządzeń na magistrali (w przeciwieństwie do I2C).
 \end{itemize}
 
-\subsection*{Zastosowanie w projekcie}
+\subsection{Zastosowanie w projekcie}
 
 W projekcie interfejs SPI został wykorzystany do komunikacji z wyświetlaczem OLED. Dzięki wysokiej przepustowości możliwa jest szybka aktualizacja zawartości ekranu, co jest kluczowe w grach wymagających dynamicznego odświeżania grafiki.
+\vspace{5pt}
 
-\textbf{Przykład inicjalizacji pinów dla SPI:}
+Przykład inicjalizacji pinów dla SPI:
 \begin{lstlisting}[language=C]
 GPIOSetDir(PORT0, 0, 1 );
 GPIOSetDir(PORT1, 10, 1 );
@@ -586,6 +605,7 @@ GPIOSetDir(PORT2, 7, 1 );
 GPIOSetDir(PORT0, 2, 1 );
 \end{lstlisting}
 Powyższy kod ustawia odpowiednie piny jako wyjścia, co pozwala na poprawne sterowanie wyświetlaczem OLED przez magistralę SPI.
+\vspace{5pt}
 
 \textbf{Podsumowanie:}  
 SPI jest jednym z najczęściej wykorzystywanych interfejsów do komunikacji z szybkimi peryferiami. Warto pamiętać o poprawnej konfiguracji linii SS oraz zgodności trybów pracy, aby zapewnić bezproblemową transmisję danych.
@@ -1115,7 +1135,6 @@ void acc_init (void)
 \end{lstlisting}
 \end{minipage}
 
-\textbf{Opis:}
 \begin{itemize}
     \item \texttt{ACC\_MCTL\_MODE(ACC\_MODE\_MEASURE)} – ustawia tryb pracy na pomiarowy (measurement mode).
     \item \texttt{ACC\_MCTL\_GLVL(ACC\_RANGE\_2G)} – ustawia zakres pomiarowy na \(\pm2g\), co jest typowe dla aplikacji użytkowych.
@@ -1124,7 +1143,7 @@ void acc_init (void)
 
 \subsection*{Przetwarzanie i interpretacja danych}
 
-Odczytane wartości są liczbami ze znakiem (\texttt{int8\_t}), których zakres odpowiada wybranemu zakresowi pomiarowemu. Przykładowo, dla zakresu \(\pm2g\), wartość 64 odpowiada przyspieszeniu 1g (czułość 64 LSB/g)[3]. Dzięki temu możliwe jest wykrywanie ruchów, przechyłów, wstrząsów czy swobodnego opadania układu.
+Odczytane wartości są liczbami ze znakiem (\texttt{int8\_t}), których zakres odpowiada wybranemu zakresowi pomiarowemu. Przykładowo, dla zakresu \(\pm2g\), wartość 64 odpowiada przyspieszeniu 1g (czułość 64 LSB/g). Dzięki temu możliwe jest wykrywanie ruchów, przechyłów, wstrząsów czy swobodnego opadania układu.
 
 \subsection*{Uwagi praktyczne}
 
@@ -1216,7 +1235,6 @@ void light_enable (void)
 \begin{itemize}
     \item ISL29003 jest stale podłączony do magistrali I2C i komunikuje się poprzez adres \texttt{LIGHT\_I2C\_ADDR} (0x44 << 1).
     \item Wyjście przerwania czujnika może być podłączone do pinu PIO2\_5 mikrokontrolera. Przerwanie pozostaje aktywne (stan niski), dopóki nie zostanie zresetowane przez hosta za pomocą I2C.
-    \item W celu ochrony linii sygnałowej przed uszkodzeniem, gdy sygnałem steruje więcej niż jeden sterownik, zastosowano szeregowy rezystor o wartości 270~$\Omega$.
     \item Czujnik umożliwia szybkie i precyzyjne pomiary natężenia światła, co jest wykorzystywane m.in. do adaptacyjnego sterowania jasnością wyświetlacza lub jako źródło ziarna dla generatora losowego w aplikacji.
 \end{itemize}
 
