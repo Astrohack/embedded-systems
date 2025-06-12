@@ -88,10 +88,10 @@
   literate={ę}{{\k{e}}}1 {ó}{{\'o}}1 {ą}{{\k{a}}}1 {ś}{{\'s}}1 {ł}{{\l}}1 {ż}{{\.z}}1 {ź}{{\'z}}1 {ć}{{\'c}}1 {ń}{{\'n}}1,
 }
 
-\title{Dokumentacja - "Refleks"}
+\title{Dokumentacja <!!!< projektu >!!!> - "Refleks"}
 \date{Systemy Wbudowane 2025}
 \author{Skład grupy (G02, czwartek 16:15):\\\\
-\textbf{Jakub Sikora 251626} \\
+\textbf{Jakub Sikora 251626 (przewodniczący grupy)} \\
 Adrian Jagieła 251531 \\
 Patryk Krawczyk 251563}
 
@@ -124,7 +124,7 @@ Patryk Krawczyk 251563}
 
 \section{Charakterystyka ogólna}
 
-Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to uniwersalne narzędzie przeznaczone do szybkiego prototypowania i testowania aplikacji wbudowanych. Mikrokontroler LPC1343 firmy NXP, oparty na 32-bitowym rdzeniu ARM Cortex-M3, zapewnia wysoką wydajność, niski pobór mocy oraz szeroki zestaw peryferiów, co czyni go idealnym wyborem dla projektów wymagających integracji wielu funkcji na jednej płytce.Posiada zegar kwarcowy 12 MHz podłączony do pinów XTALIN/XTALOUT.
+Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to uniwersalne narzędzie przeznaczone do szybkiego prototypowania i testowania aplikacji <!!!< przeznaczoncyh do zastosowania w systemach >!!!> wbudowanych. Mikrokontroler LPC1343 firmy NXP, oparty na 32-bitowym rdzeniu ARM Cortex-M3, zapewnia wysoką wydajność, niski pobór mocy oraz szeroki zestaw peryferiów, co czyni go idealnym wyborem dla projektów wymagających integracji wielu funkcji na jednej płytce.Posiada zegar kwarcowy 12 MHz podłączony do pinów XTALIN/XTALOUT.
 
 \section{Główne cechy mikrokontrolera LPC1343}
 
@@ -155,10 +155,11 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
 \section{Bezpieczeństwo i użytkowanie}
 
 \begin{itemize}
-    \item Płytka dostarczana jest w opakowaniu antystatycznym -- należy unikać ładunków elektrostatycznych podczas pracy.
+    \item Płytka dostarczana jest w opakowaniu <???< antystatycznym >???> -- należy unikać ładunków elektrostatycznych podczas pracy.
     \item Do programowania wymagany jest odpowiedni programator/debugger (np. ARM-JTAG-EW, ARM-USB-OCD, SWD).
     \item Zalecane środowiska programistyczne to IAR for ARM, Rowley CrossWorks lub dedykowane IDE Eclipse-based (np. LPCXpresso).
     \item Przed podłączeniem płytki do komputera przez USB należy upewnić się, że nie występują zwarcia na liniach zasilania.
+    \item <!!!< Podłączenie płytki do komputera należy realizować zgodnie z ustaloną przez kierownika przedmiotu procedurą opisaną w regulaminie. >!!!>
 \end{itemize}
 
 \chapter{Podział pracy w zespole wraz z listą wykorzystanych funkcjonalności}
@@ -185,8 +186,8 @@ Płytka rozwojowa z mikrokontrolerem LPC1343 (np. LPC-P1343 lub LPC-H1343) to un
         \hline
         Timer               & Patryk Krawczyk \\
         Dźwięk              & Jakub Sikora \\
-        Joystick (GPIO)     & Jakub Sikora \\
-        Wyświetlacz OLED    & Adrian Jagieła \\
+        Joystick (GPIO)     & Adrian Jagieła \\
+        Wyświetlacz OLED    & Jakub Sikora \\
         Interfejs SPI       & Jakub Sikora \\
         Linijka diod        & Adrian Jagieła \\
         Interfejs I2C       & Jakub Sikora \\
@@ -1148,7 +1149,7 @@ Odczytane wartości są liczbami ze znakiem (\texttt{int8\_t}), których zakres 
 \subsection*{Uwagi praktyczne}
 
 \begin{itemize}
-    \item W projekcie akcelerometr służy m.in. do wykrywania przechylenia płytki (np. do resetowania rekordu).
+    \item W projekcie akcelerometr służy m.in. do wykrywania przechylenia płytki (np. do resetowania rekordu <!!!< przechowywującego najwyższy wynik >!!!>).
     \item Dwa wyjścia przerwań mogą być wykorzystane do szybkiego reagowania na zdarzenia bez konieczności ciągłego odpytywania czujnika.
     \item Dzięki szerokiemu zakresowi napięć oraz wbudowanym układom poziomującym, moduł jest kompatybilny z większością mikrokontrolerów 3,3 V i 5 V.
 \end{itemize}
@@ -1239,6 +1240,48 @@ void light_enable (void)
 \end{itemize}
 
 \chapter{Analiza skutków awarii (FMEA)}
+
+Analiza FMEA (Failure Mode and Effects Analysis) stanowi systematyczną metodę oceny ryzyka dla wszystkich komponentów sprzętowych wykorzystanych w projekcie gry "Refleks". Celem tej analizy jest identyfikacja potencjalnych punktów awarii, ocena ich wpływu na funkcjonalność systemu oraz określenie priorytetów działań naprawczych.
+
+\section{Cel i znaczenie analizy FMEA}
+
+FMEA umożliwia proaktywne zarządzanie ryzykiem poprzez:
+\begin{itemize}
+\item Identyfikację potencjalnych punktów awarii przed ich wystąpieniem
+\item Priorytetyzację działań naprawczych na podstawie poziomu ryzyka
+\item Systematyczną ocenę wpływu każdej awarii na funkcjonalność systemu
+\item Optymalizację alokacji zasobów na najbardziej krytyczne komponenty
+\end{itemize}
+
+\section{Metodologia oceny ryzyka}
+
+Analiza FMEA opiera się na trzech kluczowych parametrach:
+
+\subsection{Prawdopodobieństwo wystąpienia (Occurrence)}
+Wartości od 0.1 do 0.3 reprezentują szacowane prawdopodobieństwo wystąpienia awarii danego komponentu:
+\begin{itemize}
+\item \textbf{0.1} - komponenty elektroniczne o wysokiej niezawodności (timer, dźwięk, EEPROM, diody LED)
+\item \textbf{0.2} - komponenty mechaniczno-elektroniczne narażone na zużycie (joystick, wyświetlacz)
+\item \textbf{0.3} - czujniki analogowe wrażliwe na warunki środowiskowe (akcelerometr, czujnik światła)
+\end{itemize}
+
+\subsection{Znaczenie awarii (Severity)}
+Ocena wpływu awarii na funkcjonalność systemu w skali 1-10:
+\begin{itemize}
+\item \textbf{Krytyczne (10)} - timer, joystick, wyświetlacz: awaria uniemożliwia podstawowe funkcje gry
+\item \textbf{Średnie (5)} - EEPROM: utrata zapisanych rekordów, ale gra nadal funkcjonuje
+\item \textbf{Niegroźne (2)} - dźwięk, diody, akcelerometr, czujnik światła: awaria funkcji pomocniczych
+\end{itemize}
+
+\subsection{Wykrywalność i reakcja}
+W obecnej implementacji wszystkie pozycje mają wartość "Brak", ponieważ w projkecie nie występują:
+\begin{itemize}
+\item mechanizmy diagnostyczne do automatycznego wykrywania awarii
+\item zdefiniowane procedury naprawcze w przypadku wystąpienia problemów
+\end{itemize}
+
+\section{Wyniki analizy FMEA}
+
 \textbf{Tabela 3. Analiza FMEA (Failure Mode and Effect Analysis).}
 \centering
 \resizebox{\textwidth}{!}{
@@ -1257,5 +1300,26 @@ void light_enable (void)
         \hline
     \end{tabular}
 }
+
+\flushleft
+
+\section{Interpretacja wyników}
+
+\subsection{Komponenty o najwyższym priorytecie}
+\begin{enumerate}
+\item \textbf{Joystick (RPN = 3.0)} - najwyższe ryzyko ze względu na krytyczność dla interfejsu użytkownika i umiarkowane prawdopodobieństwo awarii mechanicznej
+\item \textbf{Wyświetlacz (RPN = 2.0)} - krytyczny dla prezentacji informacji, awaria uniemożliwia interakcję z grą
+\item \textbf{Timer (RPN = 1.0)} - fundamentalny dla pomiaru czasu reakcji, awaria eliminuje podstawową funkcjonalność
+\end{enumerate}
+
+\subsection{Komponenty o niskim ryzyku}
+Czujniki pomocnicze (akcelerometr, czujnik oświetlenia) oraz elementy wizualne (diody LED) charakteryzują się niskim wpływem na krytyczne funkcje systemu.
+
+\section{Wnioski i rekomendacje}
+
+Analiza FMEA wskazuje na konieczność skupienia uwagi na komponentach interfejsu użytkownika (joystick, wyświetlacz) oraz systemie pomiaru czasu (timer). Obecny brak mechanizmów diagnostycznych i procedur naprawczych stanowi obszar do poprawy w przyszłych wersjach systemu.
+
+Implementacja podstawowych testów diagnostycznych oraz procedur fallback dla krytycznych komponentów znacząco poprawiłaby niezawodność całego systemu i zmniejszyła ryzyko niepowodzenia misji.
+
 
 \end{document}
